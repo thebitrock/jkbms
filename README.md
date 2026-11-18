@@ -5,8 +5,8 @@ protection boards (JK-PB2A16S20P and related models). It explains how to read
 data from the BMS and how to write settings and send commands.
 
 The documents apply to firmware V19.x. Behaviour marked ✔ was checked on a
-JK-PB2A16S20P (hardware 19A, firmware V19.30). Behaviour marked ○ is documented
-but was not yet checked on a device.
+JK-PB2A16S20P (hardware 19A, firmware V19.30). Behaviour marked ○ is expected
+but was not yet checked on a device, and ? marks an assumed meaning.
 
 Not affiliated with Jikong (JK-BMS). Use at your own risk: this device protects
 a large battery.

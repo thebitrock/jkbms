@@ -12,7 +12,10 @@ Columns:
   or a broken rule gives Modbus exception 03 (JK02 status 0).
 - **Default**: factory value of the LiFePO4 preset.
 - **Example**: value read from a working 16S LiFePO4 100 Ah pack.
-- **✔** checked on a device. **○** not yet checked on a device.
+- **✔** checked on a device. **○** expected, not yet checked on a device. **?** assumed
+  meaning, not confirmed.
+- In the **W** column, ✔ means that a write was accepted, read back and restored on
+  a device. The ranges and cross-field rules are ○ unless a note says otherwise.
 - **JK02**: the Bluetooth command code that writes the same field.
 
 Write column: **W** = writable, **R** = read only, **—** = cannot be written
@@ -139,14 +142,14 @@ compensation.
 
 | Addr | Type | Name | Values | Default | Example | W | JK02 |
 |---|---|---|---|---|---|---|---|
-| 0x1108 | u32 | Pack address (DevAddr) | Set by DIP switches. 0 = parallel master (see [Serial ports](serial-ports-and-can.md#4-pack-address-and-parallel-packs)). | 1 | 1 | — ✔ | — |
+| 0x1108 | u32 | Pack address (DevAddr) | Set by DIP switches. 0 = parallel master ? (see [Serial ports](serial-ports-and-can.md#4-pack-address-and-parallel-packs)). | 1 | 1 | — ✔ | — |
 | 0x110C | u32 | Discharge pre-charge time | 0–300 s | 5 | 5 | W ✔ | 0x25 |
-| 0x1110 | u32 | Factory constant | — | 500000 | 500000 | — ○ | — |
+| 0x1110 | u32 | Not documented (factory constant ?) | — | 500000 | 500000 | — ○ | — |
 | 0x1114 | u16 | Function switches | bitfield below | 0x1010 | 0x1200 | W ✔ (bit 4) | 0xBE (all) / per bit |
 | 0x1116 | s8 pair | Heating start temperature (high byte), heating stop temperature (low byte) | −40…100 °C each; start < stop | −10 / 0 | −10 / 0 | W ✔ (same value) | 0xBF (both), 0x37 / 0x38 |
 | 0x1118 | U8+U8 | Smart-sleep delay (high byte) | 1–100 h. A write also restarts the sleep countdown 0x1308. | 24 | 24 | W ○ | 0x39 |
 | 0x1120 | — | Reserved | — | — | — | — | — |
-| 0x1122 | s8 pair | Discharge low-temperature protection (high byte) / recovery (low byte) | −40…100 °C each; protection < recovery | −35 / −30 | −20 / −15 | W ○ | 0xC6 (both), 0x3A / 0x3B |
+| 0x1122 | s8 pair | Discharge low-temperature protection (high byte) / recovery (low byte) ? | −40…100 °C each; protection < recovery | −35 / −30 | −20 / −15 | W ○ | 0xC6 (both), 0x3A / 0x3B |
 
 The heating temperatures act only when heating is enabled (0x1114 bit 0). The
 example values were consistent with the smart-sleep countdown: 0x1118 = 24 h and
@@ -271,9 +274,9 @@ publish dumps of 0x1400–0x14AF.
 | 0x1490 | ASCII 32 | Reserved string | | | R | |
 | 0x14B0 | u16 | Not documented | no range check | 0x0000 | W ✔ (same value) | 0xA4 |
 | 0x14B2 | U8+U8 | High byte: **protocol number of the RS485 port** (1 = Modbus slave). Low byte: CAN protocol number. | Each number < 128 and enabled in its bitmap below | 0x0100 | W ✔ (same value) | 0xC0 |
-| 0x14B4 | 16 bytes | Bitmap of protocols that may be selected for the RS485 port (bit *n* = protocol *n*) | | | R | |
+| 0x14B4 | bitmap | Protocols that may be selected for the port set by 0x14B2 high byte (bit *n* = protocol *n*) | | `FB E6` = 0, 1, 3–7, 9, 10, 13–15 | R ✔ | |
 | 0x14C4 | 16 bytes | Bitmap of protocols that may be selected for CAN | | `FF 0F …` (0–11) | R ✔ | |
-| 0x14D4 | U8+U8 | Protocol number of the second serial port | | 0x01FB | — ✔ | |
+| 0x14D4 | U8 + bitmap | High byte: protocol number of the second serial port. From the low byte on: its enable bitmap. | | `01 FB E6` (protocol 1) | — ✔ | |
 | 0x14E4 | U8+U8 | High byte: alarm source of the display buzzer. Low byte: source of dry contact 1. | each < 15 | 0x0908 | W ✔ (same value) | 0xC1, 0xA9 / 0xAA |
 | 0x14E6 | U8+U8 | High byte: source of dry contact 2. Low byte: read only. | < 15 | 0x0001 | W ✔ (same value) | 0xAB |
 | 0x14E8 | s32 | Buzzer trigger value | no range check | 100 | W ✔ | 0xAC |
@@ -283,10 +286,10 @@ publish dumps of 0x1400–0x14AF.
 | 0x14F8 | s32 | Dry contact 2 trigger value | no range check | 0 | W ✔ | 0xB0 |
 | 0x14FC | s32 | Dry contact 2 release value | no range check | 0 | W ✔ | 0xB1 |
 | 0x1500 | s32 | Data logging period | 5–864000 s | 3600 | W ✔ | 0xB2 |
-| 0x1504 | U8+U8 | High byte: **RCV time** (time at RCV before the change to RFV). Low byte: read only. | 1–250 × 0.1 h | 0x0532 (0.5 h) | W ✔ (low byte ignored) | 0xC2, 0xB3 |
+| 0x1504 | U8+U8 | High byte: **RCV time** (time at RCV before the change to RFV). Low byte: read only. | 1–250 × 0.1 h | 0x0532 (0.5 h) | W ✔ (high byte stored, low byte ignored) | 0xC2, 0xB3 |
 | 0x1506 | U8+U8 | High byte: CAN protocol library version (read only). Low byte: emergency start duration. | 1–30 min | 0x011E (30 min) | W ○ | 0xB5 |
 | 0x1508 | U8 + 7 bytes | Protocol number of the third serial port, then its 7-byte enable bitmap | < 32 and enabled | | W ○ | 0xB6 |
-| 0x1510 | U8+U8 | Not documented (pack-related count) | 1–50 | | W ○ | 0xC7 / 0xB7 |
+| 0x1510 | U8+U8 | Not documented (pack-related count ?) | 1–50 | | W ○ | 0xC7 / 0xB7 |
 
 Each dry contact and the buzzer switch on when the selected source crosses the
 trigger value and switch off at the release value. The source numbers select the
@@ -318,10 +321,10 @@ Each command has a fixed size; send exactly that many registers.
 | 0x1620 | u16 | Send telemetry frame (JK02 type 0x02) | any | | None | 0xC3 |
 | 0x1622 | u16 | Send event-record frames (JK02 type 0x06) | any | | None | 0xA7 |
 | 0x1624 | u16 | Send log frame (JK02 type 0x05) | any | | None | 0xA1 |
-| 0x1626 | u16 | Reboot into update mode | any | | **Do not use** | 0xFF |
+| 0x1626 | u16 | Reboot (into update mode ?) | any | | **Do not use** | 0xFF |
 | 0x1628, 0x162A, 0x162C, 0x162E | — | Service and factory functions | — | — | **Do not use** | 0xC4, 0xFE, 0xC5, 0x6D |
-| 0x1630 | u16 | SOC calibration | 1–99 % | Sets SOC (the name other client software uses) | Changes SOC | 0x6E |
-| 0x1632 | u16 | SOH calibration | 50–100 % | Sets SOH | Changes SOH | 0x6F |
+| 0x1630 | u16 | SOC calibration ? | 1–99 % | Sets SOC ? (the name other client software uses) | Changes SOC | 0x6E |
+| 0x1632 | u16 | SOH calibration ? | 50–100 % | Sets SOH ? | Changes SOH | 0x6F |
 | 0x1634 | u32 | Not documented | ≤ 20000000 | | Do not use | 0x70 |
 
 None of the commands was tested on a device. ○ The read of 0x1600 giving exception

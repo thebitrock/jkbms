@@ -3,7 +3,7 @@
 How the JK-PB BMS reacts to measurements and to writes. Addresses refer to the
 [register map](register-map.md).
 
-✔ = checked on a device. ○ = not yet checked on a device.
+✔ = checked on a device. ○ = expected behaviour, not yet checked on a device. ? = assumed meaning, not confirmed.
 
 ## 1. Protection
 

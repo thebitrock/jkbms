@@ -6,7 +6,7 @@ responses that start with `55 AA EB 90`. The response bodies are the same data
 blocks that Modbus exposes, so the [register map](register-map.md) is also the
 JK02 field map.
 
-✔ = checked on a device. ○ = not yet checked on a device.
+✔ = checked on a device. ○ = expected behaviour, not yet checked on a device. ? = assumed meaning, not confirmed.
 
 ## 1. Discovery and GATT
 

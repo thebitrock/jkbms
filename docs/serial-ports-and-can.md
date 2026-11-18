@@ -4,7 +4,7 @@ The JK-PB BMS has several communication ports. Each serial port and the CAN port
 runs one protocol from a numbered list. The protocol number decides the baud rate
 and the frame format on that port.
 
-✔ = checked on a device. ○ = not yet checked on a device.
+✔ = checked on a device. ○ = expected behaviour, not yet checked on a device. ? = assumed meaning, not confirmed.
 
 ## 1. Ports and protocol selectors
 

@@ -5,7 +5,7 @@ the transport, the addressing model, the data types, and the exact rules for
 reads and writes. The meaning of each address is in the
 [register map](register-map.md).
 
-✔ = checked on a device (JK-PB2A16S20P, V19.30). ○ = not yet checked on a device.
+✔ = checked on a device. ○ = expected behaviour, not yet checked on a device. ? = assumed meaning, not confirmed. Device: JK-PB2A16S20P, V19.30.
 
 ## 1. Transport
 
@@ -15,15 +15,16 @@ reads and writes. The meaning of each address is in the
 | Line format | **115200 baud, 8 data bits, no parity, 1 stop bit** | ✔ |
 | Slave address | The pack address (DIP switches). 1 on a single pack. It cannot be changed over Modbus. | ✔ |
 | Function codes | **0x03** Read Holding Registers, **0x10** Write Multiple Registers | ✔ |
-| Other function codes | 0x01, 0x04, 0x06 and all others → exception **01** | ✔ (01, 04) |
+| Other function codes | 0x01, 0x04 → exception **01** ✔. 0x06 and others → exception 01 ○ | |
 | Broadcast (address 0) | Not answered | ✔ |
 | Other addresses | Not answered | ✔ |
 | CRC | CRC-16/MODBUS (polynomial 0x8005 reflected = 0xA001, init 0xFFFF), low byte first | ✔ |
-| Bad CRC | The BMS replies with exception **04** | ✔ |
+| Bad CRC | The BMS replies with exception **04** (`01 83 04 40 F3`), with a valid CRC | ✔ |
 
-The protocol number of the RS485 port must be 1 (Modbus). It is the high byte of
-0x14B2 (see [Serial ports](serial-ports-and-can.md)). Another protocol number
-turns the port into an inverter link, and the Modbus slave stops answering.
+The Modbus slave runs on a serial port whose protocol number is 1. Do not change
+the protocol numbers in 0x14B2 or 0x1508 from a Modbus connection: if you change
+the number of the port you use, the Modbus slave stops answering on it. See
+[Serial ports](serial-ports-and-can.md).
 
 ## 2. Addressing
 
@@ -121,7 +122,7 @@ Request : 01 03 12 00 00 10 41 7E         -> 32 data bytes, 16 × u16 mV
 
 ### Write rules
 
-- Use **FC10** only. FC06 is not supported (exception 01). ✔
+- Use **FC10** only. FC06 is not supported (exception 01). ○
 - **One field per request.** The start address must be the exact start of a
   writable field, and the quantity must be exactly the size of that field:
   2 registers for a u32, 1 register for a 16-bit or U8+U8 field. ✔ (u32, u16 fields)
@@ -131,8 +132,8 @@ Request : 01 03 12 00 00 10 41 7E         -> 32 data bytes, 16 × u16 mV
   (CurBalanMax = 2001 rejected)
 - Field that cannot be written over Modbus → exception 02. ✔ (0x1108 DevAddr,
   0x14D4)
-- Every accepted write is applied and saved to EEPROM at once. There is no separate
-  "save" command. ✔
+- Every accepted write is applied at once ✔ and saved to EEPROM at once ○. There is
+  no separate "save" command.
 - After a write, read the field back. The reply to FC10 only echoes the address and
   the quantity.
 
@@ -140,7 +141,8 @@ Request : 01 03 12 00 00 10 41 7E         -> 32 data bytes, 16 × u16 mV
 
 Some writable fields are one byte. When you write such a field, the **high byte** of
 the register is the value and the low byte is ignored, unless the field is a byte
-pair (both bytes are written). ✔ (0x1504: a change of the low byte was ignored)
+pair (both bytes are written). ✔ (0x1504: a high-byte change was stored, a low-byte
+change was ignored)
 
 | Address | Written bytes |
 |---|---|
@@ -181,7 +183,7 @@ Exception frame: `slave, FC | 0x80, code, CRC`. Example: `01 83 02 C0 F1`.
 - **SOC reset.** Writing CapBatCell (0x107C) or loading a chemistry preset makes the
   BMS replace the remaining capacity with an estimate from the average cell voltage.
   On a flat LiFePO4 curve this estimate can be far off. ✔ (seen after a capacity write) See
-  [Device behaviour](device-behaviour.md#soc-re-estimate).
+  [Device behaviour](device-behaviour.md#22-soc-re-estimate).
 - **EEPROM wear.** Write only when a value really changes. Never write the same value
   on every start-up or on a schedule.
 - **Cross-field rules.** Thresholds depend on each other (for example UVP < SOC-0 %
