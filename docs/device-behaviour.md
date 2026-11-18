@@ -81,8 +81,10 @@ The SOC calibration command (0x1630, 1–99 %) is assumed to set SOC directly ?.
 
 ## 3. Writes
 
-- A write is applied at once ✔ and saved to EEPROM at once ○. There is no save
-  command.
+- A write is applied at once and saved to EEPROM. There is no save command. ✔ (a
+  changed value was kept after a restart)
+- Right after a start-up or a button press, Modbus writes were ignored without a reply
+  for about 10 s to 1 min, while reads worked. ✔ (observed; the cause is not known)
 - The same rules apply to writes from Modbus, Bluetooth and the display.
 - Some writes have side effects:
 

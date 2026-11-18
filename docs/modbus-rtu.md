@@ -116,7 +116,8 @@ Request : 01 03 12 00 00 10 41 7E         -> 32 data bytes, 16 × u16 mV
 - Wait for each reply (or a timeout of about 300 ms) before you send the next
   request. Use a gap of at least 3.5 characters (≈ 0.3 ms at 115200) between frames.
 - Now and then the BMS did not answer a request for a few seconds, also when
-  nothing else was on the bus. Retry after the timeout. Before you repeat a write,
+  nothing else was on the bus. Right after a start-up or a button press, writes got
+  no reply and were not applied for about 10 s to 1 min, while reads worked. Retry after the timeout. Before you repeat a write,
   read the field back: a repeated write of 0x107C resets SOC even when the first one
   was applied.
 - Only one master may poll the bus. Two masters on the same RS485 pair collide and
@@ -138,8 +139,8 @@ Request : 01 03 12 00 00 10 41 7E         -> 32 data bytes, 16 × u16 mV
   (CurBalanMax = 2001 rejected; SOC 100 % voltage above RCV rejected)
 - Field that cannot be written over Modbus → exception 02. ✔ (0x1108 DevAddr,
   0x14D4)
-- Every accepted write is applied at once ✔ and saved to EEPROM at once ○. There is
-  no separate "save" command.
+- Every accepted write is applied at once and saved to EEPROM. There is no separate
+  "save" command. ✔ (0x1014 changed, BMS restarted, value kept)
 - After a write, read the field back. The reply to FC10 only echoes the address and
   the quantity.
 
