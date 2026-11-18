@@ -122,8 +122,8 @@ heater.
 | Addr | Name | Values | Default | Example | W | JK02 |
 |---|---|---|---|---|---|---|
 | 0x106C | Cell count | 2–16 (on 16S boards) | 16 | 16 | W ✔ (same value) | 0x1C |
-| 0x1070 | Charge MOS enable | 0 = off, 1 = on | 1 | 1 | W ✔ (same value) | 0x1D |
-| 0x1074 | Discharge MOS enable | 0 = off, 1 = on. **0 cuts power to the load.** | 1 | 1 | W ✔ (same value) | 0x1E |
+| 0x1070 | Charge MOS enable | 0 = off, 1 = on | 1 | 1 | W ✔ (0 turned the charge MOS off at once, 1 back on) | 0x1D |
+| 0x1074 | Discharge MOS enable | 0 = off, 1 = on. **0 cuts power to the load.** | 1 | 1 | W ✔ (0 turned the discharge MOS off at once; after 1 it came back within a few seconds) | 0x1E |
 | 0x1078 | Balancer enable | 0 = off, 1 = on | 1 | 1 | W ✔ (1→0→1) | 0x1F |
 | 0x107C | **Nominal capacity** | 2000–2000000 mAh. **A write resets SOC** ([details](device-behaviour.md#22-soc-re-estimate)). | 200000 | 100000 | W ✔ | 0x20 |
 
@@ -273,7 +273,7 @@ publish dumps of 0x1400–0x14AF.
 | 0x1480 | ASCII 16 | User data | ≤ 12 characters | `JK-BMS` | W ○ | 0xA2 |
 | 0x1490 | ASCII 32 | Reserved string | | | R | |
 | 0x14B0 | u16 | Not documented | no range check | 0x0000 | W ✔ (same value) | 0xA4 |
-| 0x14B2 | U8+U8 | High byte: **protocol number of the RS485 port** (1 = Modbus slave). Low byte: CAN protocol number. | Each number < 128 and enabled in its bitmap below | 0x0100 | W ✔ (same value) | 0xC0 |
+| 0x14B2 | U8+U8 | High byte: protocol number of the first serial port (on the test device **not** the RS485 connector used for Modbus, see [Serial ports](serial-ports-and-can.md)). Low byte: CAN protocol number. | Each number < 128 and enabled in its bitmap below | 0x0100 | W ✔ (0, 4 and back to 1 over Bluetooth) | 0xC0 (value byte 6 = high byte, byte 7 = low byte ✔) |
 | 0x14B4 | bitmap | Protocols that may be selected for the port set by 0x14B2 high byte (bit *n* = protocol *n*) | | `FB E6` = 0, 1, 3–7, 9, 10, 13–15 | R ✔ | |
 | 0x14C4 | 16 bytes | Bitmap of protocols that may be selected for CAN | | `FF 0F …` (0–11) | R ✔ | |
 | 0x14D4 | U8 + bitmap | High byte: protocol number of the second serial port. From the low byte on: its enable bitmap. | | `01 FB E6` (protocol 1) | — ✔ | |
@@ -311,9 +311,9 @@ Each command has a fixed size; send exactly that many registers.
 | 0x160A | u16 | Load Li-ion (NMC) preset | any | Overwrites all thresholds, **resets SOC** | High | 0x68 |
 | 0x160C | u16 | Load LiFePO4 preset | any | Overwrites all thresholds, **resets SOC** | High | 0x69 |
 | 0x160E | u16 | Load LTO preset | any | Overwrites all thresholds, **resets SOC** | High | 0x6A |
-| 0x1610 | u16 | Emergency start (toggle) | any | Turns the discharge MOS on for the emergency duration (0x1506 low byte) while a protection is active. A second write cancels it. | Bypasses protection | 0x6B |
+| 0x1610 | u16 | Emergency start (toggle) ✔ | any | Turns the discharge MOS on for the emergency duration (0x1506 low byte) while a protection is active. A second write cancels it. ✔ (0x12D4 started at 30 min and went to 0 after the second write) | Bypasses protection | 0x6B |
 | 0x1612 | u32 | Set the clock ✔ | Seconds since 2020-01-01 00:00 | Sets 0x1300 (checked with +1, +60, +600 s) | Low | 0x6C |
-| 0x1616 | u16 | Restart | any | Restart after 0.5 s | Short power loss of the BMS logic | 0x66 |
+| 0x1616 | u16 | Restart ✔ | any | Replies, then restarts. The boot loader prints a short text banner on RS485 before the application starts. Modbus answered again within about 1 s; the power-on count went up by 1. Settings and SOC are kept. | Short power loss of the BMS logic | 0x66 |
 | 0x1618 | u16 | **Factory reset** (keeps calibration) | any | All settings return to defaults | High | 0x9D |
 | 0x161A | u16 | **Full factory reset** (also clears calibration) | any | Voltage and current accuracy is lost | **Very high** | 0xA3 |
 | 0x161C | u16 | Send device-info frame (JK02 type 0x03) | any | Over Modbus: the 300-byte frame comes back on RS485, followed by the normal FC10 reply ✔ | None | 0x97 |
@@ -323,8 +323,8 @@ Each command has a fixed size; send exactly that many registers.
 | 0x1624 | u16 | Send log frame (JK02 type 0x05) | any | Same as 0x161C ✔ | None | 0xA1 |
 | 0x1626 | u16 | Reboot (into update mode ?) | any | | **Do not use** | 0xFF |
 | 0x1628, 0x162A, 0x162C, 0x162E | — | Service and factory functions | — | — | **Do not use** | 0xC4, 0xFE, 0xC5, 0x6D |
-| 0x1630 | u16 | SOC calibration ? | 1–99 % | Sets SOC ? (the name other client software uses) | Changes SOC | 0x6E |
-| 0x1632 | u16 | SOH calibration ? | 50–100 % | Sets SOH ? | Changes SOH | 0x6F |
+| 0x1630 | u16 | SOC calibration ? | 1–99 % | **Not supported on V19.30:** exception 02 over Modbus, status 2 over Bluetooth ✔ | — | 0x6E |
+| 0x1632 | u16 | SOH calibration ? | 50–100 % | **Not supported on V19.30:** exception 02 over Modbus, status 2 over Bluetooth ✔ | — | 0x6F |
 | 0x1634 | u32 | Not documented | ≤ 20000000 | | Do not use | 0x70 |
 
 None of the commands was tested on a device. ○ The read of 0x1600 giving exception

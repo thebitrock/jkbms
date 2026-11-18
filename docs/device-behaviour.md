@@ -77,7 +77,9 @@ The estimate is a straight line between UVP and OVP. It is far from the real SOC
 the flat LiFePO4 curve. The value corrects itself at the next full charge. Client
 software must write 0x107C only when the user changes the capacity.
 
-The SOC calibration command (0x1630, 1–99 %) is assumed to set SOC directly ?.
+The SOC calibration command (0x1630 / JK02 0x6E) is not supported on V19.30 (exception 02
+over Modbus, status 2 over Bluetooth). ✔ There is no way to set SOC from outside on this
+version: it corrects itself at the next full charge.
 
 ## 3. Writes
 
@@ -91,7 +93,7 @@ The SOC calibration command (0x1630, 1–99 %) is assumed to set SOC directly ?.
 | Write | Side effect |
 |---|---|
 | 0x107C nominal capacity | SOC re-estimate (section 2.2) ✔ |
-| 0x1070 / 0x1074 charge / discharge switch | An event is logged. Turning discharge on clears the related fault. ○ |
+| 0x1070 / 0x1074 charge / discharge switch | The MOS turns off at once when written 0 ✔. After 1, the charge MOS comes back at once and the discharge MOS within a few seconds ✔. An event is logged; turning discharge on clears the related fault ○. |
 | 0x1118 smart-sleep delay | Restarts the sleep countdown 0x1308 (= hours × 3600), also with the same value. ✔ |
 | 0x1114 bit 7 | Clears the parallel current-limit fault. ○ |
 | 0x1428 Bluetooth name | The module is renamed and restarted; the Bluetooth link drops. ○ |
@@ -170,7 +172,9 @@ Values that are the same in all three presets:
 ## 8. Emergency start
 
 - Command 0x1610 turns the discharge MOS on for the emergency duration (0x1506 low
-  byte, minutes) even while a protection is active. A second command cancels it. ○
+  byte, minutes) even while a protection is active ○. A second command cancels it ✔.
+  (With no protection active, 0x12D4 started at 30 × 60 s and went to 0 after the
+  second command.)
 - The remaining time is shown in 0x12D4. ✔ (register)
 - Use it only to start an inverter from a battery that tripped on under-voltage.
 

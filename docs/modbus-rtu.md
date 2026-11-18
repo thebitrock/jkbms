@@ -23,7 +23,8 @@ reads and writes. The meaning of each address is in the
 
 The Modbus slave runs on a serial port whose protocol number is 1. Do not change
 the protocol numbers in 0x14B2 or 0x1508 from a Modbus connection: if you change
-the number of the port you use, the Modbus slave stops answering on it. See
+the number of the port you use, the Modbus slave stops answering on it. (On the test
+device the Modbus connector was not controlled by 0x14B2.) See
 [Serial ports](serial-ports-and-can.md).
 
 ## 2. Addressing

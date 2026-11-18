@@ -313,14 +313,15 @@ Code 0xB4 (RFV time) is not supported on V19.x (status 2).
 | 0x68 / 0x69 / 0x6A | Load Li-ion / LiFePO4 / LTO preset | no | Overwrites all thresholds, resets SOC |
 | 0x6B | Emergency start toggle | no | Bypasses protection |
 | 0x6C | Set the clock (seconds since 2020-01-01) | no | Low |
-| 0x6E | SOC calibration ?, 1–99 % | no | Changes SOC |
-| 0x6F | SOH calibration ?, 50–100 % | no | Changes SOH |
+| 0x6E | SOC calibration ?, 1–99 %. Not supported on V19.30 (status 2) ✔ | no | — |
+| 0x6F | SOH calibration ?, 50–100 %. Not supported on V19.30 (status 2) ✔ | no | — |
 | **0x9D** | **Factory reset** | **yes** | High |
 | 0xA3 | Full factory reset including calibration | no | Very high |
 | **0xFF** | **Reboot** (into update mode ?) | **yes** | Do not use |
 | 0x6D, 0x70, 0xC4, 0xFE | Service functions | — | Do not use |
 
-None of the commands in 6.6 was tested on a device. ○
+Checked on a device: 0x6E and 0x6F (status 2 on V19.30). The other commands in 6.6
+were not tested. ○
 
 ## 7. Bulk configuration frames
 

@@ -14,11 +14,13 @@ and the frame format on that port.
 | CAN | see section 3 | 0x14B2 low byte | yes ○ |
 | Second serial port | 1 on the test device | 0x14D4 high byte | no ✔ |
 | Third serial port | — | 0x1508 | yes ○ |
-
-Both the first and the second serial port were set to protocol 1 (Modbus) on the
-test device, so the tests do not show which of the two selectors belongs to the RS485
-connector that answered. ?
 | Bluetooth module | JK02 frames, fixed | — | — |
+
+On the test device the RS485 connector that answered Modbus is **not** controlled by
+0x14B2: with the 0x14B2 high byte set to 0 and then to 4 (9600 baud), Modbus kept
+answering at 115200 on that connector. ✔ Its protocol is probably the second serial
+port (0x14D4 = 1) ?. A change of 0x14B2 may also take effect only after a restart ?.
+0x14B2 was written over Bluetooth (code 0xC0) and set back to 1.
 
 A protocol number can be selected only if its bit is set in the enable bitmap for
 that port. The vendor app builds its protocol drop-down lists from these bitmaps:
