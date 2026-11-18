@@ -327,5 +327,6 @@ Each command has a fixed size; send exactly that many registers.
 | 0x1632 | u16 | SOH calibration ? | 50–100 % | **Not supported on V19.30:** exception 02 over Modbus, status 2 over Bluetooth ✔ | — | 0x6F |
 | 0x1634 | u32 | Not documented | ≤ 20000000 | | Do not use | 0x70 |
 
-None of the commands was tested on a device. ○ The read of 0x1600 giving exception
-02 was checked. ✔
+Checked on a device ✔: 0x1610, 0x1612, 0x1616, 0x161C, 0x161E, 0x1620, 0x1622, 0x1624,
+and 0x1630 / 0x1632 (not supported). A read of 0x1600 gives exception 02 ✔. The other
+commands were not tested ○.
