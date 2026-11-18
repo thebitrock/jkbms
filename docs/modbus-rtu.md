@@ -115,12 +115,12 @@ Request : 01 03 12 00 00 10 41 7E         -> 32 data bytes, 16 × u16 mV
 - Settings and device info change only when someone writes them. Read them at
   start-up and after your own writes.
 - Wait for each reply (or a timeout of about 300 ms) before you send the next
-  request. Use a gap of at least 3.5 characters (≈ 0.3 ms at 115200) between frames.
-- Now and then the BMS did not answer a request for a few seconds, also when
-  nothing else was on the bus. Right after a start-up or a button press, writes got
-  no reply and were not applied for about 10 s to 1 min, while reads worked. Retry after the timeout. Before you repeat a write,
-  read the field back: a repeated write of 0x107C resets SOC even when the first one
-  was applied.
+  request.
+- **After each reply from the BMS, wait at least 2 ms before you send the next
+  request** (10–20 ms is a safe value). With no gap, about 4 of 10 requests got no
+  reply and were not carried out; with a gap of 2 ms or more, 10 of 10 worked. ✔
+- If a request gets no reply, read the field back before you repeat a write: a
+  repeated write of 0x107C resets SOC even when the first one was applied.
 - Only one master may poll the bus. Two masters on the same RS485 pair collide and
   produce CRC errors on both sides.
 

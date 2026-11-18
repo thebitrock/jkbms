@@ -289,7 +289,7 @@ publish dumps of 0x1400–0x14AF.
 | 0x1504 | U8+U8 | High byte: **RCV time** (time at RCV before the change to RFV). Low byte: read only. | 1–250 × 0.1 h | 0x0532 (0.5 h) | W ✔ (high byte stored, low byte ignored) | 0xC2, 0xB3 |
 | 0x1506 | U8+U8 | High byte: CAN protocol library version (read only, a changed high byte is not stored ✔). Low byte: emergency start duration. **A write also arms the emergency start** with the new duration ✔. | 1–30 min | 0x011E (30 min) | W ✔ (29, back to 30; then cancel with 0x1610) | 0xB5 |
 | 0x1508 | U8 + 7 bytes | Protocol number of the third serial port, then its 7-byte enable bitmap | < 32 and enabled | | W ○ | 0xB6 |
-| 0x1510 | U8+U8 | Not documented (pack-related count ?) | 1–50 | | W ○ | 0xC7 / 0xB7 |
+| 0x1510 | U8+U8 | High byte: not documented (pack-related count ?), writable. Low byte and 0x1512–0x1523: a RAM copy of the settings bytes 0x1111–0x1123 (0x1110 constant, 0x1114, 0x1116, 0x1118, 0x1122). The copy is 0 after a start-up and is filled by the next settings write. ✔ | 1–50 (high byte) | 0x0100 after start-up | W ○ | 0xC7 / 0xB7 |
 
 Each dry contact and the buzzer switch on when the selected source crosses the
 trigger value and switch off at the release value. The source numbers select the
@@ -309,7 +309,7 @@ Each command has a fixed size; send exactly that many registers.
 | 0x1604 | u16 | **Shutdown** | any | The board turns off after about 1 s. | Load loses power | 0x65 |
 | 0x1606 | u32 | Current calibration | Real current in mA. Send 0 (or < 51) at zero current to set the zero offset. | Gain must stay within ±20 %. | Wrong value = wrong current and SOC | 0x67 |
 | 0x160A | u16 | Load Li-ion (NMC) preset | any | Overwrites all thresholds, **resets SOC** | High | 0x68 |
-| 0x160C | u16 | Load LiFePO4 preset | any | Overwrites all thresholds, **resets SOC** | High | 0x69 |
+| 0x160C | u16 | Load LiFePO4 preset ✔ | any | Overwrites all thresholds, **resets SOC** ✔ | High | 0x69 |
 | 0x160E | u16 | Load LTO preset | any | Overwrites all thresholds, **resets SOC** | High | 0x6A |
 | 0x1610 | u16 | Emergency start (toggle) ✔ | any | Turns the discharge MOS on for the emergency duration (0x1506 low byte) while a protection is active. A second write cancels it. ✔ (0x12D4 started at 30 min and went to 0 after the second write) | Bypasses protection | 0x6B |
 | 0x1612 | u32 | Set the clock ✔ | Seconds since 2020-01-01 00:00 | Sets 0x1300 (checked with +1, +60, +600 s) | Low | 0x6C |

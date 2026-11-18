@@ -64,7 +64,7 @@ The re-estimate is triggered by:
 | Trigger | |
 |---|---|
 | A write of the nominal capacity 0x107C, also with the same value | ✔ |
-| A chemistry preset command (0x160A / 0x160C / 0x160E) | ○ |
+| A chemistry preset command (0x160A / 0x160C / 0x160E) | ✔ (0x160C) |
 | The bulk configuration write of the vendor app | ○ |
 | Start-up with an invalid stored remaining capacity | ○ |
 
@@ -85,8 +85,6 @@ version: it corrects itself at the next full charge.
 
 - A write is applied at once and saved to EEPROM. There is no save command. ✔ (a
   changed value was kept after a restart)
-- Right after a start-up or a button press, Modbus writes were ignored without a reply
-  for about 10 s to 1 min, while reads worked. ✔ (observed; the cause is not known)
 - The same rules apply to writes from Modbus, Bluetooth and the display.
 - Some writes have side effects:
 
@@ -107,7 +105,13 @@ version: it corrects itself at the next full charge.
 ## 4. Chemistry presets
 
 The preset commands copy a complete settings block (all fields except the pack
-address), save it and reset SOC. ○
+address), save it and reset SOC. ✔ (LiFePO4 preset 0x160C loaded on a device: every
+LiFePO4 value in the table below was read back, and SOC was re-estimated with the new
+UVP, OVP and capacity. Li-ion and LTO ○.) Over Modbus, the command also sends the new
+JK02 settings frame (type 0x01) on RS485 before the FC10 reply. ✔
+
+To undo a preset, write every field back one by one in an order that keeps the
+cross-field rules true. The last write of 0x107C re-estimates SOC once more.
 
 | Field | Address | LiFePO4 | Li-ion (NMC) | LTO |
 |---|---|---|---|---|
