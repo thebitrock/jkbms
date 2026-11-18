@@ -167,7 +167,7 @@ Request : 01 10 10 0C 00 02 04 00 00 0E 10 3B 96
 Response: 01 10 10 0C 00 02 85 0B
 ```
 
-### Example: write the heating start/stop temperatures (−10 °C / 0 °C) ○
+### Example: write the heating start/stop temperatures (−10 °C / 0 °C) ✔
 
 ```
 Request : 01 10 11 16 00 01 02 F6 00 E2 07

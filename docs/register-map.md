@@ -149,7 +149,7 @@ compensation.
 | 0x1116 | s8 pair | Heating start temperature (high byte), heating stop temperature (low byte) | −40…100 °C each; start < stop | −10 / 0 | −10 / 0 | W ✔ (same value) | 0xBF (both), 0x37 / 0x38 |
 | 0x1118 | U8+U8 | Smart-sleep delay (high byte) | 1–100 h. A write also restarts the sleep countdown 0x1308. | 24 | 24 | W ○ | 0x39 |
 | 0x1120 | — | Reserved | — | — | — | — | — |
-| 0x1122 | s8 pair | Discharge low-temperature protection (high byte) / recovery (low byte) ? | −40…100 °C each; protection < recovery | −35 / −30 | −20 / −15 | W ○ | 0xC6 (both), 0x3A / 0x3B |
+| 0x1122 | s8 pair | Discharge low-temperature protection (high byte) / recovery (low byte) ? (−20 / −15 °C on the test device; same-value write accepted ✔) | −40…100 °C each; protection < recovery | −35 / −30 | −20 / −15 | W ○ | 0xC6 (both), 0x3A / 0x3B |
 
 The heating temperatures act only when heating is enabled (0x1114 bit 0). The
 example values were consistent with the smart-sleep countdown: 0x1118 = 24 h and
@@ -319,8 +319,8 @@ Each command has a fixed size; send exactly that many registers.
 | 0x161C | u16 | Send device-info frame (JK02 type 0x03) | any | Over Modbus: the 300-byte frame comes back on RS485, followed by the normal FC10 reply ✔ | None | 0x97 |
 | 0x161E | u16 | Send settings frame (JK02 type 0x01) | any | Same as 0x161C ✔ | None | 0x96 |
 | 0x1620 | u16 | Send telemetry frame (JK02 type 0x02) | any | Same as 0x161C ✔ | None | 0xC3 |
-| 0x1622 | u16 | Send event-record frames (JK02 type 0x06) | any | | None | 0xA7 |
-| 0x1624 | u16 | Send log frame (JK02 type 0x05) | any | | None | 0xA1 |
+| 0x1622 | u16 | Send event-record frames (JK02 type 0x06) | any | Over Modbus: all frames come back on RS485 (15 × 300 bytes on the test device), then the FC10 reply ✔ | None | 0xA7 |
+| 0x1624 | u16 | Send log frame (JK02 type 0x05) | any | Same as 0x161C ✔ | None | 0xA1 |
 | 0x1626 | u16 | Reboot (into update mode ?) | any | | **Do not use** | 0xFF |
 | 0x1628, 0x162A, 0x162C, 0x162E | — | Service and factory functions | — | — | **Do not use** | 0xC4, 0xFE, 0xC5, 0x6D |
 | 0x1630 | u16 | SOC calibration ? | 1–99 % | Sets SOC ? (the name other client software uses) | Changes SOC | 0x6E |

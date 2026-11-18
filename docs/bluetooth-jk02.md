@@ -45,13 +45,15 @@ The BMS also sends the 20-byte acknowledgement (4.4, status 1) after 0x97 and af
 5. Writes are accepted only after step 3.
 
 Before both 0x97 and 0x96 have been received, the BMS ignores every command except
-0x66, 0x96, 0x97, 0x9B, 0x9D, 0xFE and 0xFF, without an answer. ○ Several of these
+0x66, 0x96, 0x97, 0x9B, 0x9D, 0xFE and 0xFF, without an answer. ✔ (0xC3 and 0xA1 were
+ignored before the handshake and answered after it) Several of these
 are dangerous (restart, factory reset, reboot, rename), so check every frame you
 build.
 
 When the central disconnects, the session is reset. After each reconnect, send 0x97
 and 0x96 again. If a central connects but does not complete the handshake, the BMS
-resets its Bluetooth module after a short time (about 20 s ?), and the link drops.
+may reset its Bluetooth module ?. This was not seen on the test device: without a
+handshake the link stayed up for 90 s. ✔
 
 While a central is connected, the module sends `AT\r\n` (`41 54 0D 0A`) as separate
 4-byte notifications, about every 135 ms, between the frames. ✔ Ignore any bytes
@@ -66,7 +68,7 @@ not 20 bytes and are ignored. ○
 |---|---|
 | 0–3 | `AA 55 90 EB` |
 | 4 | Command code (section 6) |
-| 5 | Value length in bytes (0 for requests, 4 for numeric settings, string length for strings). Must be < 14. |
+| 5 | Value length in bytes: 0 for 0x96 and 0x97, **2 for the other requests** (0xA1, 0xA7: ignored with 0, answered with 2 or 4 ✔), 4 for numeric settings, string length for strings. Must be < 14. |
 | 6–9 | Value, little-endian. Strings start at byte 6. |
 | 10 | Cell index 0–31, only for code 0x23 (connection-wire resistance). Otherwise 0. |
 | 11–18 | 0 |
@@ -111,8 +113,8 @@ Wire resistance of cell 5 = 200 µΩ (code 0x23, index in byte 10):
 | 0x01 | Settings block, Modbus 0x1000–0x1123 | 0x96, a preset command |
 | 0x02 | Telemetry block, Modbus 0x1200–0x1323 | streamed after the handshake; 0xC3 |
 | 0x03 | Device-info block, Modbus 0x1400–0x1523 | 0x97, 0x96 |
-| 0x05 | 256-byte log page | 0xA1 |
-| 0x06 | Event records: start index in bytes 6–7, count in byte 8, then up to 12 entries of 24 bytes from byte 9. Frames repeat until the log is empty. | 0xA7 |
+| 0x05 | 256-byte log page. One frame. ✔ | 0xA1 |
+| 0x06 | Event records: start index in bytes 6–7, count in byte 8, then up to 12 entries of 24 bytes from byte 9. Frames repeat until the log is empty. ✔ (15 frames on the test device, start index 0, 12, 24, …; then the ack) | 0xA7 |
 
 ### 4.2 Field offsets
 
@@ -226,8 +228,8 @@ saves can be lost. ○
 | 0x97 | Send device-info frame (type 0x03) | yes |
 | 0x96 | Send settings frame (type 0x01), then device-info frame | yes |
 | 0xC3 | Send one telemetry frame (type 0x02) | no |
-| 0xA1 | Send log frame (type 0x05) | no |
-| 0xA7 | Send event-record frames (type 0x06) | no |
+| 0xA1 | Send log frame (type 0x05). Length byte 2. ✔ | no |
+| 0xA7 | Send event-record frames (type 0x06). Length byte 2. ✔ | no |
 
 ### 6.2 Numeric settings (length 4, value u32 LE)
 

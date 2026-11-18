@@ -68,8 +68,7 @@ The re-estimate is triggered by:
 | The bulk configuration write of the vendor app | ○ |
 | Start-up with an invalid stored remaining capacity | ○ |
 
-A write of the SOC 100 % voltage does **not** trigger it ✔. The same is expected for
-the SOC 0 % voltage ○.
+A write of the SOC 100 % voltage or the SOC 0 % voltage does **not** trigger it ✔.
 
 The estimate is a straight line between UVP and OVP. It is far from the real SOC on
 the flat LiFePO4 curve. The value corrects itself at the next full charge. Client
@@ -88,7 +87,7 @@ The SOC calibration command (0x1630, 1–99 %) is assumed to set SOC directly ?.
 |---|---|
 | 0x107C nominal capacity | SOC re-estimate (section 2.2) ✔ |
 | 0x1070 / 0x1074 charge / discharge switch | An event is logged. Turning discharge on clears the related fault. ○ |
-| 0x1118 smart-sleep delay | Restarts the sleep countdown 0x1308 (= hours × 3600). ✔ (values consistent) |
+| 0x1118 smart-sleep delay | Restarts the sleep countdown 0x1308 (= hours × 3600). ○ (with smart sleep off, 0x1308 stays at hours × 3600 ✔) |
 | 0x1114 bit 7 | Clears the parallel current-limit fault. ○ |
 | 0x1428 Bluetooth name | The module is renamed and restarted; the Bluetooth link drops. ○ |
 | 0x1470 setup passcode | Session state is re-initialised. ○ |
@@ -200,5 +199,6 @@ Values that are the same in all three presets:
 - 0x1300 is a real-time clock in seconds since 2020-01-01 00:00. Set it with 0x1612. ✔
   (clock read, decoded and set)
 - The BMS keeps an event log (switch changes, protections). Read it over Bluetooth with
-  0xA7 (type 0x06 frames) and 0xA1 (type 0x05). ○
+  0xA7 (type 0x06 frames) and 0xA1 (type 0x05), length byte 2, or over Modbus with
+  0x1622 and 0x1624. ✔ (frames received; the record fields are not decoded here)
 - With timed data logging on (0x1114 bit 8), data is stored every 0x1500 seconds. ○
