@@ -264,13 +264,13 @@ publish dumps of 0x1400–0x14AF.
 | 0x1418 | ASCII 8 | Firmware version | | `19.30` | R ✔ | |
 | 0x1420 | u32 | Total run time | s | 395700 | R ✔ | |
 | 0x1424 | u32 | Power-on count | | 60 | R ✔ | |
-| 0x1428 | ASCII 16 | **Bluetooth name.** Advertised as `<name>-NN`, NN = pack address (2 digits). A write renames the BLE module. | ≤ 12 characters on write | (16 chars) | W ○ | 0x9B |
+| 0x1428 | ASCII 16 | **Bluetooth name.** Advertised as `<name>-NN`, NN = pack address (2 digits). A write renames the BLE module. | ≤ 12 characters on write (6 registers). The factory name can be longer (15 characters on the test device), so a same-value write is not possible: it would cut the name. ✔ | (16 chars) | W ○ | 0x9B |
 | 0x1438 | ASCII 16 | Passcode | ≤ 12 characters | — | W ○ | 0x9C |
 | 0x1448 | ASCII 8 | Manufacturing date `YYMMDD` | Write-once: only while the stored value is `000000` | `260925` | W ○ | 0x9E |
 | 0x1450 | ASCII 16 | Factory identifier (same text as the factory Bluetooth name) | | — | R ✔ | |
-| 0x1460 | ASCII 16 | Device name | ≤ 12 characters | `JK-BMS` | W ○ | 0x9F |
+| 0x1460 | ASCII 16 | Device name | ≤ 12 characters. Write exactly 6 registers (12 bytes); 1, 2, 4, 7 or 8 registers → exception 03 ✔ | `JK-BMS` | W ✔ (same value) | 0x9F |
 | 0x1470 | ASCII 16 | Setup passcode | ≤ 12 characters | — | W ○ | 0xA0 |
-| 0x1480 | ASCII 16 | User data | ≤ 12 characters | `JK-BMS` | W ○ | 0xA2 |
+| 0x1480 | ASCII 16 | User data | ≤ 12 characters. Write exactly 6 registers ✔ | `JK-BMS` | W ✔ (same value) | 0xA2 |
 | 0x1490 | ASCII 32 | Reserved string | | | R | |
 | 0x14B0 | u16 | Not documented | no range check | 0x0000 | W ✔ (same value) | 0xA4 |
 | 0x14B2 | U8+U8 | High byte: protocol number of the first serial port (on the test device **not** the RS485 connector used for Modbus, see [Serial ports](serial-ports-and-can.md)). Low byte: CAN protocol number. | Each number < 128 and enabled in its bitmap below | 0x0100 | W ✔ (0, 4 and back to 1 over Bluetooth) | 0xC0 (value byte 6 = high byte, byte 7 = low byte ✔) |
@@ -287,7 +287,7 @@ publish dumps of 0x1400–0x14AF.
 | 0x14FC | s32 | Dry contact 2 release value | no range check | 0 | W ✔ | 0xB1 |
 | 0x1500 | s32 | Data logging period | 5–864000 s | 3600 | W ✔ | 0xB2 |
 | 0x1504 | U8+U8 | High byte: **RCV time** (time at RCV before the change to RFV). Low byte: read only. | 1–250 × 0.1 h | 0x0532 (0.5 h) | W ✔ (high byte stored, low byte ignored) | 0xC2, 0xB3 |
-| 0x1506 | U8+U8 | High byte: CAN protocol library version (read only). Low byte: emergency start duration. | 1–30 min | 0x011E (30 min) | W ○ | 0xB5 |
+| 0x1506 | U8+U8 | High byte: CAN protocol library version (read only, a changed high byte is not stored ✔). Low byte: emergency start duration. **A write also arms the emergency start** with the new duration ✔. | 1–30 min | 0x011E (30 min) | W ✔ (29, back to 30; then cancel with 0x1610) | 0xB5 |
 | 0x1508 | U8 + 7 bytes | Protocol number of the third serial port, then its 7-byte enable bitmap | < 32 and enabled | | W ○ | 0xB6 |
 | 0x1510 | U8+U8 | Not documented (pack-related count ?) | 1–50 | | W ○ | 0xC7 / 0xB7 |
 

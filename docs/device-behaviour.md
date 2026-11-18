@@ -98,7 +98,7 @@ version: it corrects itself at the next full charge.
 | 0x1114 bit 7 | Clears the parallel current-limit fault. ○ |
 | 0x1428 Bluetooth name | The module is renamed and restarted; the Bluetooth link drops. ○ |
 | 0x1470 setup passcode | Session state is re-initialised. ○ |
-| 0x1506 low byte (emergency duration) | Arms the emergency timer with the new duration. ○ |
+| 0x1506 low byte (emergency duration) | Arms the emergency timer with the new duration, also when you only change the duration. ✔ Send 0x1610 afterwards to cancel it. |
 
 - Do not write in a loop. Each write wears the EEPROM.
 - A Bluetooth write and a Modbus write at the same moment can lose one EEPROM save.

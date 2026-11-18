@@ -17,7 +17,7 @@ JK02 field map.
 | Data service | 0xFFE0 | ✔ |
 | Data characteristic | 0xFFE1 (handle 0x000A on the test device): write without response + notify. Requests are written to it; responses arrive as notifications. | ✔ |
 | Other characteristics | 0xFFE2 (write, notify) and 0xFFE3 (write) in the same service, and the services 0x1800, 0xFE59 and two vendor services. Not needed for JK02. | ✔ (seen) |
-| PIN / pairing | The BMS does not check any password on the Bluetooth link. | ○ |
+| PIN / pairing | No pairing and no PIN. All tests (reads and writes) ran without pairing or any password. | ✔ |
 | Connections | One central at a time ? While another central was connected, a second one could connect but saw no services. | ? |
 
 The module is a transparent bridge. MTU and the split of a 300-byte response into
@@ -61,8 +61,9 @@ that are not part of a frame.
 
 ## 3. Request frame (central → BMS)
 
-Exactly **20 bytes**. One request per write. Two requests joined into one write are
-not 20 bytes and are ignored. ○
+Exactly **20 bytes**. One request per write. If two requests are joined into one
+40-byte write, only the first one is carried out. ✔ (0x97 + 0x96 in one write gave
+only the type 0x03 frame)
 
 | Byte | Content |
 |---|---|

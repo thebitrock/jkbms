@@ -74,7 +74,7 @@ You can read a complete block in two requests, for example 0x1200 × 123 and
 | U8+U8 | 1 | Two independent bytes. **The byte at the lower address is the high byte of the register.** Example: 0x12A6 = `00 64` → byte 0x12A6 = 0 (balance state), byte 0x12A7 = 100 (SOC). |
 | s8 pair | 1 | Two signed bytes, for temperature pairs (°C). Example: 0x1116 = `F6 00` → −10 °C, 0 °C. |
 | float32 | 2 | IEEE 754, big-endian. Only 0x12DC. |
-| ASCII | 4–16 | Zero-padded string, first character at the lowest address. |
+| ASCII | 4–16 | Zero-padded string, first character at the lowest address. The 16-byte strings are written with exactly 6 registers (12 bytes). ✔ |
 | Bitmask | 1–2 | Bit 0 = least significant bit of the value. |
 
 Units are given per field in the [register map](register-map.md): mV, mA, mAh,
