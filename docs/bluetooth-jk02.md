@@ -210,8 +210,8 @@ Checked over Bluetooth on a device ✔:
 | 0x06 := 10 mV (restore) | 1 | Back to 10 |
 | 0x30 charging float mode := 1 (same value) | 1 | — |
 
-The type 0x01 frame is not sent by itself after a write. Send 0x96 again to read the
-new settings. ✔ So the JK02 code
+To read the new settings after a write, send 0x96 again: the next type 0x01 frame
+shows the new value. ✔ So the JK02 code
 for each field is listed next to it in the [register map](register-map.md).
 
 Do not write over Bluetooth and Modbus at the same moment. One of the two EEPROM
