@@ -125,7 +125,7 @@ heater.
 | 0x1070 | Charge MOS enable | 0 = off, 1 = on | 1 | 1 | W ✔ (same value) | 0x1D |
 | 0x1074 | Discharge MOS enable | 0 = off, 1 = on. **0 cuts power to the load.** | 1 | 1 | W ✔ (same value) | 0x1E |
 | 0x1078 | Balancer enable | 0 = off, 1 = on | 1 | 1 | W ✔ (1→0→1) | 0x1F |
-| 0x107C | **Nominal capacity** | 2000–2000000 mAh. **A write resets SOC** ([details](device-behaviour.md#soc-re-estimate)). | 200000 | 100000 | W ✔ | 0x20 |
+| 0x107C | **Nominal capacity** | 2000–2000000 mAh. **A write resets SOC** ([details](device-behaviour.md#22-soc-re-estimate)). | 200000 | 100000 | W ✔ | 0x20 |
 
 A wrong cell count raises the "cell quantity" alarm.
 

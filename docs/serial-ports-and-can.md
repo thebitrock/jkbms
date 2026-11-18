@@ -10,10 +10,14 @@ and the frame format on that port.
 
 | Port | Protocol number | Selector | Writable |
 |---|---|---|---|
-| RS485 (Modbus port) | 1 = Modbus RTU slave ✔ | 0x14B2 high byte | yes ✔ (same value) |
+| First serial port | 1 on the test device | 0x14B2 high byte | yes ✔ (same value) |
 | CAN | see section 3 | 0x14B2 low byte | yes ○ |
-| Second serial port | — | 0x14D4 | no ✔ |
+| Second serial port | 1 on the test device | 0x14D4 high byte | no ✔ |
 | Third serial port | — | 0x1508 | yes ○ |
+
+Both the first and the second serial port were set to protocol 1 (Modbus) on the
+test device, so the tests do not show which of the two selectors belongs to the RS485
+connector that answered. ?
 | Bluetooth module | JK02 frames, fixed | — | — |
 
 A protocol number can be selected only if its bit is set in the enable bitmap for
@@ -21,17 +25,18 @@ that port. The vendor app builds its protocol drop-down lists from these bitmaps
 
 | Bitmap | Port | Example |
 |---|---|---|
-| 0x14B4 (16 bytes) | RS485 | |
-| 0x14C4 (16 bytes) | CAN | `FF 0F` = protocols 0–11 ✔ |
-| 0x1509 (7 bytes) | third serial port | |
+| 0x14B4 | first serial port | `FB E6` = protocols 0, 1, 3–7, 9, 10, 13–15 ✔ |
+| 0x14D5 | second serial port | `FB E6` (same list) ✔ |
+| 0x14C4 | CAN | `FF 0F` = protocols 0–11 ✔ |
+| 0x1509 | third serial port | |
 
 Bit *n* of the bitmap (byte n/8, bit n%8) enables protocol *n*.
 
 Which serial connector on the board belongs to which port can differ between board
 revisions. Check it with the vendor manual for your board. ○
 
-**Do not change the protocol of the port you are connected to.** If you change the
-RS485 port from protocol 1 to another number, the Modbus slave stops answering on it,
+**Do not change the protocol of the port you are connected to.** If you change it
+from protocol 1 to another number, the Modbus slave stops answering on that port,
 and you must change it back from the display or the app.
 
 ## 2. Serial protocol list
@@ -51,7 +56,7 @@ All serial protocols use 8N1. ○
 | 10 | 115200 | |
 | 13, 14 | 9600 | |
 | 15 | 115200 | |
-| 21 | 115200 | Used on the second serial port when the pack address is 0 (parallel master) |
+| 21 | 115200 | Used on the second serial port when the pack address is 0 (parallel master ?) |
 | 2, 8, 11, 12, 16–20 | 9600 | Empty slots |
 
 The inverter brand names for these numbers are shown only in the vendor app. Read
@@ -61,7 +66,9 @@ the name for a number there.
 
 ### 3.1 CAN protocol list
 
-Each CAN protocol sets its own bit rate. Identifiers are 11-bit unless noted. ○
+Each CAN protocol sets its own bit rate. Identifiers are 11-bit unless noted. The bit
+rates and identifiers are not yet checked on a device ○, and the notes on inverter
+ID sets are assumptions ?.
 
 | No. | Bit rate | Identifiers used | Notes |
 |---|---|---|---|
@@ -98,7 +105,7 @@ current limits. The CAN protocol library version is the high byte of 0x1506
 | Pack address | Set with the DIP switches. Shown at 0x1108. Cannot be written over Modbus or Bluetooth. | ✔ |
 | Modbus slave address | Equal to the pack address. The BMS answers only its own address; it does not answer broadcast (0) or other addresses. | ✔ |
 | Bluetooth name suffix | `-NN` = pack address | ✔ |
-| Address 0 | The pack is the parallel master. Its second serial port runs protocol 21 to collect data from the other packs. | ○ |
+| Address 0 | The second serial port changes to protocol 21. This is assumed to be the parallel-master mode that collects data from the other packs. | ? |
 
 Several packs on one RS485 bus: give each pack a different address (1–15) and poll
 them one after the other from one master.

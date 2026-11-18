@@ -60,8 +60,8 @@ Response (53280 mV):                              01 03 04 00 00 D0 20 A6 2B
 - Every accepted write is saved to EEPROM at once. Do not write on a timer or on
   every start-up.
 - **Writing the battery capacity (0x107C) or loading a chemistry preset resets SOC**
-  to a rough estimate from the cell voltage. The reset was seen on a device after a
-  capacity write. ✔
+  to a rough estimate from the cell voltage, even when you write the same value. ✔
+  (capacity write)
 - Some commands cannot be undone: shutdown, factory reset, calibration. See the
   [register map](docs/register-map.md#5-commands-0x1600-write-only).
 - There is no authentication. Any device on the bus or any Bluetooth central can

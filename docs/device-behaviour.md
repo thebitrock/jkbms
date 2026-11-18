@@ -18,7 +18,7 @@ How the JK-PB BMS reacts to measurements and to writes. Addresses refer to the
 | Charge over-temperature | battery temperature > 0x104C | charge MOS off | < 0x1050 |
 | Charge under-temperature | battery temperature < 0x105C | charging blocked | > 0x1060 |
 | Discharge over-temperature | battery temperature > 0x1054 | discharge MOS off | < 0x1058 |
-| Discharge low temperature | battery temperature < 0x1122 high byte | discharge blocked | > 0x1122 low byte |
+| Discharge low temperature ? | battery temperature < 0x1122 high byte | discharge blocked | > 0x1122 low byte |
 | MOSFET over-temperature | MOSFET temperature > 0x1064 | both MOS off | < 0x1068 |
 
 While a protection waits for its release time, the countdown is shown in
@@ -51,32 +51,36 @@ remaining      = nominal capacity × (average cell − UVP) / (OVP − UVP)
                  (0 if average cell ≤ UVP)
 ```
 
-Checked on a device: after a write test that included 0x107C, with average cell 3329 mV,
-UVP 2800 mV, OVP 3600 mV and 100000 mAh, the BMS set the remaining capacity to
-exactly (3329 − 2800) / 800 × 100000 = 66125 mAh, and SOC went from 100 % to
-66 %. ✔
+Checked on a device ✔ (UVP 2800 mV, OVP 3600 mV, nominal capacity 100000 mAh):
+
+| Write | Average cell | Remaining before | Remaining after | Formula |
+|---|---|---|---|---|
+| 0x107C (write test, +1 then restored) | 3329 mV | 99915 mAh (100 %) | 66125 mAh (66 %) | (3329 − 2800) / 800 × 100000 = 66125 |
+| 0x1018 with the same value | 3426 mV | 99997 mAh (100 %) | 99997 mAh (100 %) | no change |
+| 0x107C with the **same** value | 3426 mV | 99997 mAh (100 %) | 78250 mAh (78 %) | (3426 − 2800) / 800 × 100000 = 78250 |
 
 The re-estimate is triggered by:
 
 | Trigger | |
 |---|---|
-| A write of the nominal capacity 0x107C | ✔ (the re-estimate was seen right after a test that wrote 0x107C) |
+| A write of the nominal capacity 0x107C, also with the same value | ✔ |
 | A chemistry preset command (0x160A / 0x160C / 0x160E) | ○ |
 | The bulk configuration write of the vendor app | ○ |
 | Start-up with an invalid stored remaining capacity | ○ |
 
-A write of the SOC 100 % / SOC 0 % voltages does **not** trigger it. ○
+A write of the SOC 100 % voltage does **not** trigger it ✔. The same is expected for
+the SOC 0 % voltage ○.
 
 The estimate is a straight line between UVP and OVP. It is far from the real SOC on
 the flat LiFePO4 curve. The value corrects itself at the next full charge. Client
 software must write 0x107C only when the user changes the capacity.
 
-The SOC calibration command (0x1630, 1–99 %) sets SOC directly. ○
+The SOC calibration command (0x1630, 1–99 %) is assumed to set SOC directly ?.
 
 ## 3. Writes
 
-- A write is applied at once and saved to EEPROM at once. There is no save
-  command. ✔
+- A write is applied at once ✔ and saved to EEPROM at once ○. There is no save
+  command.
 - The same rules apply to writes from Modbus, Bluetooth and the display.
 - Some writes have side effects:
 

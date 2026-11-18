@@ -17,7 +17,7 @@ JK02 field map.
 | Data service | 0xFFE0 | ✔ |
 | Data characteristic | 0xFFE1: write (without response) + notify. Requests are written to it; responses arrive as notifications. | ○ |
 | PIN / pairing | The BMS does not check any password on the Bluetooth link. | ○ |
-| Connections | One central at a time. If the BMS is already connected (for example to a phone), other centrals cannot connect or see no services. | ✔ (observed) |
+| Connections | One central at a time ? While another central was connected, a second one could connect but saw no services. | ? |
 
 The module is a transparent bridge. MTU and the split of a 300-byte response into
 notifications depend on the module, so always reassemble the frame yourself (see 4.3).
@@ -29,7 +29,7 @@ notifications depend on the module, so always reassemble the frame yourself (see
 3. Write the **settings request (0x96)**. The BMS answers with a type 0x01 frame and
    then a type 0x03 frame.
 4. After both requests, the BMS streams **type 0x02 frames** (telemetry)
-   continuously, about 3–5 frames per second. ○
+   continuously, a few frames per second ?.
 5. Writes are accepted only after step 3.
 
 Before both 0x97 and 0x96 have been received, the BMS ignores every command except
@@ -39,10 +39,10 @@ build.
 
 When the central disconnects, the session is reset. After each reconnect, send 0x97
 and 0x96 again. If a central connects but does not complete the handshake, the BMS
-resets its Bluetooth module after about 20 s, and the link drops. ○
+resets its Bluetooth module after a short time (about 20 s ?), and the link drops.
 
-The module can pass short status text (for example `AT` lines) to the central as
-data. Ignore any bytes that are not part of a frame. ○
+The module may pass short status text (for example `AT` lines) to the central as
+data ?. Ignore any bytes that are not part of a frame.
 
 ## 3. Request frame (central → BMS)
 
@@ -283,11 +283,11 @@ Code 0xB4 (RFV time) is not supported on V19.x (status 2).
 | 0x68 / 0x69 / 0x6A | Load Li-ion / LiFePO4 / LTO preset | no | Overwrites all thresholds, resets SOC |
 | 0x6B | Emergency start toggle | no | Bypasses protection |
 | 0x6C | Set the clock (seconds since 2020-01-01) | no | Low |
-| 0x6E | SOC calibration, 1–99 % | no | Changes SOC |
-| 0x6F | SOH calibration, 50–100 % | no | Changes SOH |
+| 0x6E | SOC calibration ?, 1–99 % | no | Changes SOC |
+| 0x6F | SOH calibration ?, 50–100 % | no | Changes SOH |
 | **0x9D** | **Factory reset** | **yes** | High |
 | 0xA3 | Full factory reset including calibration | no | Very high |
-| **0xFF** | **Reboot into update mode** | **yes** | Do not use |
+| **0xFF** | **Reboot** (into update mode ?) | **yes** | Do not use |
 | 0x6D, 0x70, 0xC4, 0xFE | Service functions | — | Do not use |
 
 None of the commands in 6.6 was tested on a device. ○

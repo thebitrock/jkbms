@@ -182,7 +182,8 @@ Exception frame: `slave, FC | 0x80, code, CRC`. Example: `01 83 02 C0 F1`.
 
 - **SOC reset.** Writing CapBatCell (0x107C) or loading a chemistry preset makes the
   BMS replace the remaining capacity with an estimate from the average cell voltage.
-  On a flat LiFePO4 curve this estimate can be far off. ✔ (seen after a capacity write) See
+  On a flat LiFePO4 curve this estimate can be far off. This happens even when you
+write the same value. ✔ See
   [Device behaviour](device-behaviour.md#22-soc-re-estimate).
 - **EEPROM wear.** Write only when a value really changes. Never write the same value
   on every start-up or on a schedule.
