@@ -145,9 +145,9 @@ compensation.
 | 0x1108 | u32 | Pack address (DevAddr) | Set by DIP switches. 0 = parallel master ? (see [Serial ports](serial-ports-and-can.md#4-pack-address-and-parallel-packs)). | 1 | 1 | — ✔ | — |
 | 0x110C | u32 | Discharge pre-charge time | 0–300 s | 5 | 5 | W ✔ | 0x25 |
 | 0x1110 | u32 | Not documented (factory constant ?) | — | 500000 | 500000 | — ○ | — |
-| 0x1114 | u16 | Function switches | bitfield below | 0x1010 | 0x1200 | W ✔ (bit 4) | 0xBE (all) / per bit |
+| 0x1114 | u16 | Function switches | bitfield below | 0x1010 | 0x1200 | W ✔ (bits 4, 6) | 0xBE (all) / per bit |
 | 0x1116 | s8 pair | Heating start temperature (high byte), heating stop temperature (low byte) | −40…100 °C each; start < stop | −10 / 0 | −10 / 0 | W ✔ (same value) | 0xBF (both), 0x37 / 0x38 |
-| 0x1118 | U8+U8 | Smart-sleep delay (high byte) | 1–100 h. A write also restarts the sleep countdown 0x1308. | 24 | 24 | W ○ | 0x39 |
+| 0x1118 | U8+U8 | Smart-sleep delay (high byte) | 1–100 h. A write also restarts the sleep countdown 0x1308. ✔ | 24 | 24 | W ✔ (same value) | 0x39 |
 | 0x1120 | — | Reserved | — | — | — | — | — |
 | 0x1122 | s8 pair | Discharge low-temperature protection (high byte) / recovery (low byte) ? (−20 / −15 °C on the test device; same-value write accepted ✔) | −40…100 °C each; protection < recovery | −35 / −30 | −20 / −15 | W ○ | 0xC6 (both), 0x3A / 0x3B |
 

@@ -87,7 +87,7 @@ The SOC calibration command (0x1630, 1–99 %) is assumed to set SOC directly ?.
 |---|---|
 | 0x107C nominal capacity | SOC re-estimate (section 2.2) ✔ |
 | 0x1070 / 0x1074 charge / discharge switch | An event is logged. Turning discharge on clears the related fault. ○ |
-| 0x1118 smart-sleep delay | Restarts the sleep countdown 0x1308 (= hours × 3600). ○ (with smart sleep off, 0x1308 stays at hours × 3600 ✔) |
+| 0x1118 smart-sleep delay | Restarts the sleep countdown 0x1308 (= hours × 3600), also with the same value. ✔ |
 | 0x1114 bit 7 | Clears the parallel current-limit fault. ○ |
 | 0x1428 Bluetooth name | The module is renamed and restarted; the Bluetooth link drops. ○ |
 | 0x1470 setup passcode | Session state is re-initialised. ○ |
@@ -174,7 +174,8 @@ Values that are the same in all three presets:
 - With smart sleep on (0x1114 bit 6), the BMS goes to low-power sleep when the cells
   are at or below the smart-sleep voltage (0x1000) and there is no current for the
   smart-sleep delay (0x1118, hours). ○
-- The countdown is shown in 0x1308 (seconds). ✔
+- The countdown is shown in 0x1308 (seconds). It counts down 1 per second while smart
+  sleep is on, and stays at hours × 3600 while it is off. ✔
 
 ## 10. Dry contacts and buzzer
 
