@@ -10,7 +10,7 @@ and the frame format on that port.
 
 | Port | Protocol number | Selector | Writable |
 |---|---|---|---|
-| First serial port | 1 on the test device | 0x14B2 high byte | yes ✔ (same value) |
+| First serial port | 1 on the test device | 0x14B2 high byte | yes ✔ (0, 4, back to 1) |
 | CAN | see section 3 | 0x14B2 low byte | yes ○ |
 | Second serial port | 1 on the test device | 0x14D4 high byte | no ✔ |
 | Third serial port | — | 0x1508 | yes ○ |
@@ -96,7 +96,7 @@ current limits. The CAN protocol library version is the high byte of 0x1506
 
 1. Read the enable bitmap at 0x14C4 to see which numbers this board allows.
 2. Write the number into the low byte of 0x14B2, together with the current high
-   byte (the RS485 protocol). Example: keep RS485 = 1 and select CAN 4 →
+   byte (the first serial port protocol). Example: keep it = 1 and select CAN 4 →
    write `01 04` to 0x14B2. ○
 3. Set the same bit rate on the inverter.
 
