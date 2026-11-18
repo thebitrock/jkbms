@@ -198,7 +198,7 @@ Values that are the same in all three presets:
 ## 12. Clock and logs
 
 - 0x1300 is a real-time clock in seconds since 2020-01-01 00:00. Set it with 0x1612. ✔
-  (clock read and decoded)
+  (clock read, decoded and set)
 - The BMS keeps an event log (switch changes, protections). Read it over Bluetooth with
   0xA7 (type 0x06 frames) and 0xA1 (type 0x05). ○
 - With timed data logging on (0x1114 bit 8), data is stored every 0x1500 seconds. ○

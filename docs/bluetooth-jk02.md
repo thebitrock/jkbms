@@ -15,21 +15,33 @@ JK02 field map.
 | Advertised name | `<Bluetooth name>-NN`. The name is the string at 0x1428; NN = pack address, 2 digits (`-01` for address 1). Several packs on one site are told apart by NN. | ✔ |
 | Advertised services | 0xFFE0 and 0xFEE7 | ✔ |
 | Data service | 0xFFE0 | ✔ |
-| Data characteristic | 0xFFE1: write (without response) + notify. Requests are written to it; responses arrive as notifications. | ○ |
+| Data characteristic | 0xFFE1 (handle 0x000A on the test device): write without response + notify. Requests are written to it; responses arrive as notifications. | ✔ |
+| Other characteristics | 0xFFE2 (write, notify) and 0xFFE3 (write) in the same service, and the services 0x1800, 0xFE59 and two vendor services. Not needed for JK02. | ✔ (seen) |
 | PIN / pairing | The BMS does not check any password on the Bluetooth link. | ○ |
 | Connections | One central at a time ? While another central was connected, a second one could connect but saw no services. | ? |
 
 The module is a transparent bridge. MTU and the split of a 300-byte response into
 notifications depend on the module, so always reassemble the frame yourself (see 4.3).
+On the test device the BMS sent its own MTU exchange request (512) right after the
+connection, and each 300-byte frame arrived as two notifications of 150 bytes. ✔
+
+On a Linux host with BlueZ 5.87, the D-Bus GATT client connected and showed
+"services resolved", but listed no characteristics. A plain ATT client on an L2CAP
+socket (CID 4) worked. If your BlueZ client shows no characteristics, try that.
 
 ## 2. Session
 
 1. Connect and enable notifications on 0xFFE1.
 2. Write the **device-info request (0x97)**. The BMS answers with a type 0x03 frame.
 3. Write the **settings request (0x96)**. The BMS answers with a type 0x01 frame and
-   then a type 0x03 frame.
+   then a type 0x03 frame. ✔
 4. After both requests, the BMS streams **type 0x02 frames** (telemetry)
-   continuously, a few frames per second ?.
+   continuously, one frame every 0.4 s (about 2.5 per second). ✔
+
+The BMS also sends the 20-byte acknowledgement (4.4, status 1) after 0x97 and after
+0x96. ✔ Observed timing: 0x97 → type 0x03 after 0.13 s, then the ack; 0x96 → type
+0x01 after 0.07 s, type 0x03 after 0.17 s, the ack, then the first type 0x02 after
+0.6 s.
 5. Writes are accepted only after step 3.
 
 Before both 0x97 and 0x96 have been received, the BMS ignores every command except
@@ -41,8 +53,9 @@ When the central disconnects, the session is reset. After each reconnect, send 0
 and 0x96 again. If a central connects but does not complete the handshake, the BMS
 resets its Bluetooth module after a short time (about 20 s ?), and the link drops.
 
-The module may pass short status text (for example `AT` lines) to the central as
-data ?. Ignore any bytes that are not part of a frame.
+While a central is connected, the module sends `AT\r\n` (`41 54 0D 0A`) as separate
+4-byte notifications, about every 135 ms, between the frames. ✔ Ignore any bytes
+that are not part of a frame.
 
 ## 3. Request frame (central → BMS)
 
@@ -82,7 +95,7 @@ Wire resistance of cell 5 = 200 µΩ (code 0x23, index in byte 10):
 
 ### 4.1 Data frame
 
-**300 bytes.** ○
+**300 bytes.** ✔ (types 0x01, 0x02, 0x03, checksums valid)
 
 | Byte | Content |
 |---|---|
@@ -150,7 +163,8 @@ heating start/stop temperatures = bytes 284 / 285; smart-sleep delay = byte 286.
 
 Device-info fields (type 0x03): model = byte 6, hardware version = byte 22,
 firmware version = byte 30, run time = byte 38, power-on count = byte 42,
-Bluetooth name = byte 46, RCV time = byte 270, emergency duration = byte 273.
+Bluetooth name = byte 46, RCV time = byte 270, emergency duration = byte 273. ✔ (model,
+versions, run time and power-on count decoded; the values match Modbus)
 
 ### 4.3 Reassembly
 
@@ -163,7 +177,8 @@ Bluetooth name = byte 46, RCV time = byte 270, emergency duration = byte 273.
 
 ### 4.4 Write acknowledgement
 
-After a write command the BMS sends a 20-byte frame with the **request** header: ○
+After a write command the BMS sends a 20-byte frame with the **request** header: ✔
+(status 1; statuses 0 and 2 ○)
 
 ```
 AA 55 90 EB C8 01 <status> 00 … 00 <checksum>
@@ -183,7 +198,8 @@ Each accepted command also gives a short beep on the BMS. ○
 
 A JK02 write and a Modbus write of the same field go through the same checks and
 have the same effect: same range, same cross-field rules, same EEPROM save, same
-side effects. The ranges were checked on a device through Modbus. ✔ So the JK02 code
+side effects. The ranges were checked on a device through Modbus. ✔ A same-value
+write of code 0x30 (charging float mode = 1) over Bluetooth returned status 1. ✔ So the JK02 code
 for each field is listed next to it in the [register map](register-map.md).
 
 Do not write over Bluetooth and Modbus at the same moment. One of the two EEPROM

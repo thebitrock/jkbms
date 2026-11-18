@@ -15,7 +15,7 @@ reads and writes. The meaning of each address is in the
 | Line format | **115200 baud, 8 data bits, no parity, 1 stop bit** | ✔ |
 | Slave address | The pack address (DIP switches). 1 on a single pack. It cannot be changed over Modbus. | ✔ |
 | Function codes | **0x03** Read Holding Registers, **0x10** Write Multiple Registers | ✔ |
-| Other function codes | 0x01, 0x04 → exception **01** ✔. 0x06 and others → exception 01 ○ | |
+| Other function codes | 0x01, 0x04, 0x06 → exception **01** ✔. Others → exception 01 ○ | |
 | Broadcast (address 0) | Not answered | ✔ |
 | Other addresses | Not answered | ✔ |
 | CRC | CRC-16/MODBUS (polynomial 0x8005 reflected = 0xA001, init 0xFFFF), low byte first | ✔ |
@@ -115,6 +115,10 @@ Request : 01 03 12 00 00 10 41 7E         -> 32 data bytes, 16 × u16 mV
   start-up and after your own writes.
 - Wait for each reply (or a timeout of about 300 ms) before you send the next
   request. Use a gap of at least 3.5 characters (≈ 0.3 ms at 115200) between frames.
+- Now and then the BMS did not answer a request for a few seconds, also when
+  nothing else was on the bus. Retry after the timeout. Before you repeat a write,
+  read the field back: a repeated write of 0x107C resets SOC even when the first one
+  was applied.
 - Only one master may poll the bus. Two masters on the same RS485 pair collide and
   produce CRC errors on both sides.
 
@@ -122,14 +126,16 @@ Request : 01 03 12 00 00 10 41 7E         -> 32 data bytes, 16 × u16 mV
 
 ### Write rules
 
-- Use **FC10** only. FC06 is not supported (exception 01). ○
+- Use **FC10** only. FC06 is not supported (exception 01). ✔
 - **One field per request.** The start address must be the exact start of a
   writable field, and the quantity must be exactly the size of that field:
   2 registers for a u32, 1 register for a 16-bit or U8+U8 field. ✔ (u32, u16 fields)
-  - Start address that is not a writable field → exception 02. ○
-  - Wrong quantity for the field → exception 03. ○
+  - Start address that is not a writable field → exception 02. ✔ (0x1002, the
+    second word of a u32)
+  - Wrong quantity for the field → exception 03. ✔ (1 register to a u32; 4 registers
+    over two fields)
 - Value outside the accepted range, or a cross-field rule broken → exception 03. ✔
-  (CurBalanMax = 2001 rejected)
+  (CurBalanMax = 2001 rejected; SOC 100 % voltage above RCV rejected)
 - Field that cannot be written over Modbus → exception 02. ✔ (0x1108 DevAddr,
   0x14D4)
 - Every accepted write is applied at once ✔ and saved to EEPROM at once ○. There is

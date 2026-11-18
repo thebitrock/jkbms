@@ -312,13 +312,13 @@ Each command has a fixed size; send exactly that many registers.
 | 0x160C | u16 | Load LiFePO4 preset | any | Overwrites all thresholds, **resets SOC** | High | 0x69 |
 | 0x160E | u16 | Load LTO preset | any | Overwrites all thresholds, **resets SOC** | High | 0x6A |
 | 0x1610 | u16 | Emergency start (toggle) | any | Turns the discharge MOS on for the emergency duration (0x1506 low byte) while a protection is active. A second write cancels it. | Bypasses protection | 0x6B |
-| 0x1612 | u32 | Set the clock | Seconds since 2020-01-01 00:00 | Sets 0x1300 | Low | 0x6C |
+| 0x1612 | u32 | Set the clock ✔ | Seconds since 2020-01-01 00:00 | Sets 0x1300 (checked with +1, +60, +600 s) | Low | 0x6C |
 | 0x1616 | u16 | Restart | any | Restart after 0.5 s | Short power loss of the BMS logic | 0x66 |
 | 0x1618 | u16 | **Factory reset** (keeps calibration) | any | All settings return to defaults | High | 0x9D |
 | 0x161A | u16 | **Full factory reset** (also clears calibration) | any | Voltage and current accuracy is lost | **Very high** | 0xA3 |
-| 0x161C | u16 | Send device-info frame (JK02 type 0x03) | any | Frame goes to the Bluetooth link | None | 0x97 |
-| 0x161E | u16 | Send settings frame (JK02 type 0x01) | any | Frame goes to the Bluetooth link | None | 0x96 |
-| 0x1620 | u16 | Send telemetry frame (JK02 type 0x02) | any | | None | 0xC3 |
+| 0x161C | u16 | Send device-info frame (JK02 type 0x03) | any | Over Modbus: the 300-byte frame comes back on RS485, followed by the normal FC10 reply ✔ | None | 0x97 |
+| 0x161E | u16 | Send settings frame (JK02 type 0x01) | any | Same as 0x161C ✔ | None | 0x96 |
+| 0x1620 | u16 | Send telemetry frame (JK02 type 0x02) | any | Same as 0x161C ✔ | None | 0xC3 |
 | 0x1622 | u16 | Send event-record frames (JK02 type 0x06) | any | | None | 0xA7 |
 | 0x1624 | u16 | Send log frame (JK02 type 0x05) | any | | None | 0xA1 |
 | 0x1626 | u16 | Reboot (into update mode ?) | any | | **Do not use** | 0xFF |
