@@ -178,7 +178,7 @@ versions, run time and power-on count decoded; the values match Modbus)
 ### 4.4 Write acknowledgement
 
 After a write command the BMS sends a 20-byte frame with the **request** header: ✔
-(status 1; statuses 0 and 2 ○)
+(all three statuses seen on a device)
 
 ```
 AA 55 90 EB C8 01 <status> 00 … 00 <checksum>
@@ -198,8 +198,20 @@ Each accepted command also gives a short beep on the BMS. ○
 
 A JK02 write and a Modbus write of the same field go through the same checks and
 have the same effect: same range, same cross-field rules, same EEPROM save, same
-side effects. The ranges were checked on a device through Modbus. ✔ A same-value
-write of code 0x30 (charging float mode = 1) over Bluetooth returned status 1. ✔ So the JK02 code
+side effects. The ranges were checked on a device through Modbus. ✔
+
+Checked over Bluetooth on a device ✔:
+
+| Write | Status | Result |
+|---|---|---|
+| 0x06 balance trigger delta := 11 mV | 1 | Modbus 0x1014 and the next type 0x01 frame both show 11 |
+| 0x13 max balance current := 2001 mA | 0 | Not changed (2000). Same range as Modbus. |
+| 0x24 pack address := 1 | 2 | Not supported |
+| 0x06 := 10 mV (restore) | 1 | Back to 10 |
+| 0x30 charging float mode := 1 (same value) | 1 | — |
+
+The type 0x01 frame is not sent by itself after a write. Send 0x96 again to read the
+new settings. ✔ So the JK02 code
 for each field is listed next to it in the [register map](register-map.md).
 
 Do not write over Bluetooth and Modbus at the same moment. One of the two EEPROM

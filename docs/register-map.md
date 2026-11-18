@@ -49,7 +49,7 @@ All fields in 2.1–2.5 are 32-bit (2 registers). Signed fields are marked *s32*
 | 0x1008 | Cell UVP recovery | mV | V; > 0x101C; < 0x1010 | 2900 | 3100 | W ✔ | 0x03 |
 | 0x100C | **Cell OVP** (over-voltage protection) | mV | V; > 0x1020 | 3650 | 3600 | W ✔ | 0x04 |
 | 0x1010 | Cell OVP recovery | mV | V; > 0x1008; < 0x1018 | 3400 | 3400 | W ✔ | 0x05 |
-| 0x1014 | Balance trigger delta | mV | 3–998 | 10 | 10 | W ✔ | 0x06 |
+| 0x1014 | Balance trigger delta | mV | 3–998 | 10 | 10 | W ✔ (also over Bluetooth) | 0x06 |
 | 0x1018 | SOC 100 % voltage | mV | V; > 0x1010; < 0x1020 | 3445 | 3445 | W ✔ | 0x07 |
 | 0x101C | SOC 0 % voltage | mV | V; > 0x1004; < 0x1008 | 2700 | 2900 | W ✔ | 0x08 |
 | 0x1020 | **RCV** (requested charge voltage per cell) | mV | V; > 0x1018; < 0x100C | 3450 | 3450 | W ✔ | 0x09 |
