@@ -68,6 +68,9 @@ The re-estimate is triggered by:
 | The bulk configuration write of the vendor app | ○ |
 | Start-up with an invalid stored remaining capacity | ○ |
 
+After a restart with a valid stored value, SOC and the remaining capacity are kept
+(78 % / 78245 mAh before and after a restart with the button). ✔
+
 A write of the SOC 100 % voltage or the SOC 0 % voltage does **not** trigger it ✔.
 
 The estimate is a straight line between UVP and OVP. It is far from the real SOC on
@@ -199,6 +202,8 @@ Values that are the same in all three presets:
 
 - 0x1300 is a real-time clock in seconds since 2020-01-01 00:00. Set it with 0x1612. ✔
   (clock read, decoded and set)
+- A restart increases the power-on count (0x1424) by 1. The run time (0x1420) and the
+  clock keep counting. Settings are kept. ✔
 - The BMS keeps an event log (switch changes, protections). Read it over Bluetooth with
   0xA7 (type 0x06 frames) and 0xA1 (type 0x05), length byte 2, or over Modbus with
   0x1622 and 0x1624. ✔ (frames received; the record fields are not decoded here)
