@@ -286,7 +286,7 @@ publish dumps of 0x1400–0x14AF.
 | 0x14F8 | s32 | Dry contact 2 trigger value | no range check | 0 | W ✔ | 0xB0 |
 | 0x14FC | s32 | Dry contact 2 release value | no range check | 0 | W ✔ | 0xB1 |
 | 0x1500 | s32 | Data logging period | 5–864000 s | 3600 | W ✔ | 0xB2 |
-| 0x1504 | U8+U8 | High byte: **RCV time** (time at RCV before the change to RFV). Low byte: read only. | 1–250 × 0.1 h | 0x0532 (0.5 h) | W ✔ (high byte stored, low byte ignored) | 0xC2, 0xB3 |
+| 0x1504 | U8+U8 | High byte: **RCV time** (time at RCV before the change to RFV). Low byte: **RFV / float dwell time** (same 0.1 h unit); not writable through this register. ○ | 1–250 × 0.1 h | 0x0532 (0.5 h) | W ✔ (high byte stored, low byte ignored) | 0xC2, 0xB3 |
 | 0x1506 | U8+U8 | High byte: CAN protocol library version (read only, a changed high byte is not stored ✔). Low byte: emergency start duration. **A write also arms the emergency start** with the new duration ✔. | 1–30 min | 0x011E (30 min) | W ✔ (29, back to 30; then cancel with 0x1610) | 0xB5 |
 | 0x1508 | U8 + 7 bytes | Protocol number of the third serial port, then its 7-byte enable bitmap | < 32 and enabled | | W ○ | 0xB6 |
 | 0x1510 | U8+U8 | High byte: not documented (pack-related count ?), writable. Low byte and 0x1512–0x1523: a RAM copy of the settings bytes 0x1111–0x1123 (0x1110 constant, 0x1114, 0x1116, 0x1118, 0x1122). The copy is 0 after a start-up and is filled by the next settings write. ✔ | 1–50 (high byte) | 0x0100 after start-up | W ○ | 0xC7 / 0xB7 |
