@@ -133,10 +133,17 @@ A wrong cell count raises the "cell quantity" alarm.
 
 | Addr | Name | Unit | Range | Default | Example | W | JK02 |
 |---|---|---|---|---|---|---|---|
-| 0x1088 + 4·n (n = 0…31) | Resistance of the bus bar or cable between cell *n* and cell *n*+1 | µΩ | 0–2000000 | 0 | 0 | W ✔ (all 32) | 0x23, cell index in byte 10 |
+| 0x1088 + 4·n (n = 0…31) | Resistance of the bus bar or cable between cell *n* and cell *n*+1. Only the first *cell count* slots map to real cells. | µΩ | 0–2000000 | 0 | 0 | W ✔ (n < cell count) | 0x23, cell index in byte 10 |
 
 The BMS subtracts I × R from the measured cell voltage under current. 0 = no
 compensation.
+
+Write only slots `0 … cell_count − 1`. The array spans 32 slots but a pack has only
+*cell count* cells, so a slot at or beyond the cell count has no physical meaning. In
+one test on a 16S pack, writing slot 16 (0x10C8) coincided with the charge and
+discharge MOS switching off for about a second; the pack recovered on its own with no
+alarm and the settings intact, but the cause is unconfirmed — so do not write past the
+cell count.
 
 ### 2.6 Board configuration (0x1108–0x1123)
 
