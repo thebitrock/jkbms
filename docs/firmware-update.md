@@ -122,20 +122,42 @@ device), for example:
 If no download arrives within its timeout, it prints `IAP Timeout` and jumps to the
 application. So the bootloader waits for the image on RS485 after the reset.
 
-## 5. Transfer to the bootloader (not fully known)
+## 5. Transfer to the bootloader (RS485 Modbus RTU)
 
-- The decrypted, trailer-stripped image is streamed to the bootloader over the serial
-  link after the reset.
-- The updater sends it through the **same protocol stack it uses for the live link**
-  (the vendor's generic frame/table transport). For the firmware path the updater pulls
-  in only `Aes::decrypt` + `uncompress` (to turn the file into the image) and the normal
-  frame checksum helpers; it does **not** run a separate XMODEM/YMODEM transfer.
-- **Not known from the files we have:** the exact firmware-frame format, the block size,
-  the opcodes and the acknowledge/retry handshake of the download. The device-side
-  acceptor is in the bootloader (the first 0x2000 of flash), which is not part of the
-  distributed application image. Recovering the exact framing needs a bootloader dump
-  from a device (for example over SWD), or a capture of the vendor updater talking to a
-  BMS on the RS485 line.
+The transfer uses the **normal Modbus RTU transport** — there is no separate
+XMODEM/YMODEM download. This was traced through the updater's send path
+(`jk-bms-monitor.exe`, "Start/Force Updating"); it is **not** verified by performing an
+update, and one step is still open (see below).
+
+**The send path.** Pressing Start/Force Updating hands the decrypted, trailer-stripped
+image to one send call, which runs on a background worker with a byte progress bar
+(bytes sent / total) and a completion callback `(success, code, sub-code)`. The
+frame serializer builds a standard Modbus RTU frame and writes it to the serial channel:
+
+```
+[slave addr] [func 0x03 or 0x10] [reg addr hi][lo] [qty hi][lo] ( [byte count][data…] ) [CRC-16/MODBUS lo][hi]
+```
+
+- Addresses and quantities are big-endian; function codes are only 0x03 / 0x10; the
+  trailing CRC is **CRC-16/MODBUS** (the same checksum as every other RS485 frame).
+  There is no byte-stuffing.
+- **Entering the bootloader is command 0x1626** (block base 0x1000 + 0x626), sent as the
+  reboot step (matches the Modbus 0x1626 / JK02 0xFF in section 4).
+
+**Acknowledgement model.** The transfer waits for Modbus-style replies and maps the
+result the same way as a normal register write: exception **01** = function code /
+register not supported, **02** = register inaccessible, **03** = data out of
+limit, **04** = CRC error, plus worker-level *timeout*, *canceled* and
+*not-supported-command*. So the bootloader answers like a Modbus slave.
+
+**Still open:** the per-block framing of the image body **after** the 0x1626 reset — the
+block size and how the image bytes are sequenced to the bootloader. In the updater's
+recovered command path the image is attached to the 0x1626 request but the serializer
+skips that inline payload for the 0x1626 address, so the image-streaming step is not
+visible in the PC code we traced; it is consistent with the bootloader (device side, not
+in the distributed image) driving the block transfer after the reset. A capture of the
+vendor updater on the RS485 line during a real update, or a bootloader dump over SWD,
+would show the exact block framing.
 
 ### Checksums used across the product
 
@@ -143,8 +165,10 @@ application. So the bootloader waits for the image on RS485 after the reset.
 |---|---|
 | Modbus RTU (RS485) | CRC-16/MODBUS: poly 0xA001 (reflected), init 0xFFFF, low byte first |
 | JK02 (BLE / RS485 frames) | 8-bit sum of the frame bytes |
+| **Firmware IAP transfer** | **CRC-16/MODBUS** — the transfer is plain Modbus RTU (see above), not a separate scheme |
 | `.jkbms` / `.dsd` file body | none in the body (AES-256-CBC + zlib; a size header and the zlib checksum catch corruption) |
 
-> An earlier version of this page said the firmware download uses CRC-16/XMODEM. That
-> was wrong: `protocore.dll` exports a `crc16_xmodem` helper, but nothing in this build
-> imports or uses it, so it says nothing about the download. Retracted.
+> History: an early draft of this page guessed CRC-16/XMODEM for the download, on the
+> strength of a `crc16_xmodem` export in `protocore.dll`. That was wrong — nothing in
+> the build calls it. Tracing the updater's actual send path showed the transfer is
+> ordinary Modbus RTU with CRC-16/MODBUS, as above.
