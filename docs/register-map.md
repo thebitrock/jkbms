@@ -292,9 +292,31 @@ publish dumps of 0x1400–0x14AF.
 | 0x1510 | U8+U8 | High byte: not documented (pack-related count ?), writable. Low byte and 0x1512–0x1523: a RAM copy of the settings bytes 0x1111–0x1123 (0x1110 constant, 0x1114, 0x1116, 0x1118, 0x1122). The copy is 0 after a start-up and is filled by the next settings write. ✔ | 1–50 (high byte) | 0x0100 after start-up | W ○ | 0xC7 / 0xB7 |
 
 Each dry contact and the buzzer switch on when the selected source crosses the
-trigger value and switch off at the release value. The source numbers select the
-watched quantity (for example SOC). The vendor does not publish the source list;
-read the names in the vendor app.
+trigger value and switch off at the release value. The source byte (0x14E4 high =
+buzzer, 0x14E4 low = dry 1, 0x14E6 high = dry 2) selects the watched condition:
+
+| Code | Source | Trigger/release unit |
+|---|---|---|
+| 0 | Off | — |
+| 1 | Low SOC | % |
+| 2 | Battery (pack) over-voltage | mV ? |
+| 3 | Battery (pack) under-voltage | mV ? |
+| 4 | Cell over-voltage | mV |
+| 5 | Cell under-voltage | mV |
+| 6 | Charge over-current | mA |
+| 7 | Discharge over-current | mA |
+| 8 | Battery over-temperature | 0.1 °C |
+| 9 | MOSFET over-temperature | 0.1 °C |
+| 10 | System alarm | — (flag) |
+| 11 | Battery low-temperature | 0.1 °C |
+| 12 | Remote control | — (flag) |
+| 13 | Above SOC | % |
+| 14 | MOSFET abnormal | — (flag) |
+
+Names are the vendor app's own labels (English build); the Chinese build matches
+one-to-one. The trigger/release unit depends on the source — voltage sources in mV,
+current in mA, temperature in 0.1 °C, SOC in %; the flag sources (10, 12, 14) have no
+analogue threshold. Units marked ? are inferred (not value-tested on a device).
 
 ---
 
