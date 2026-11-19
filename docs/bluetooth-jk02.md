@@ -166,8 +166,11 @@ heating start/stop temperatures = bytes 284 / 285; smart-sleep delay = byte 286.
 
 Device-info fields (type 0x03): model = byte 6, hardware version = byte 22,
 firmware version = byte 30, run time = byte 38, power-on count = byte 42,
-Bluetooth name = byte 46, RCV time = byte 270, emergency duration = byte 273. ✔ (model,
-versions, run time and power-on count decoded; the values match Modbus)
+Bluetooth name = byte 46, RCV time (0x1504 high byte) = byte 266, RFV/float dwell
+time (0x1504 low byte) = byte 267 — both follow the `6 + (addr − 0x1400)` rule.
+✔ (model, versions, run time, power-on count and RCV/RFV time decoded; the values
+match Modbus). Emergency duration offset not yet confirmed (an earlier guess of
+byte 273 was wrong; by the offset rule it is near byte 269).
 
 ### 4.3 Reassembly
 
