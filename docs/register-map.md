@@ -163,7 +163,7 @@ enabled, start/stop set to 25 / 30 °C and the cells at 19.8 °C, the heater did
 start while the pack carried no current. Under charge (3.6 A) the 0x12D0 low byte went
 to 1 within 2 s, and back to 0 about 10 s later as the charge current fell to zero
 (SOC 100 %). So heating needs charge current. ✔ The heater current 0x12E6 stayed 0 mA
-on the test device, which has no heater fitted. The
+on the test device; probably no heater is fitted there. ○ The
 example values were consistent with the smart-sleep countdown: 0x1118 = 24 h and
 0x1308 = 86400 s. ✔
 
