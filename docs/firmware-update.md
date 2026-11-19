@@ -122,18 +122,20 @@ device), for example:
 If no download arrives within its timeout, it prints `IAP Timeout` and jumps to the
 application. So the bootloader waits for the image on RS485 after the reset.
 
-## 5. Transfer to the bootloader (partly known)
+## 5. Transfer to the bootloader (not fully known)
 
 - The decrypted, trailer-stripped image is streamed to the bootloader over the serial
   link after the reset.
-- **The transfer uses a CRC-16/XMODEM checksum** (polynomial 0x1021, init 0x0000, no
-  input/output reflection, no final XOR). This is a different checksum from the two
-  runtime protocols — Modbus uses CRC-16/MODBUS and JK02 uses an 8-bit byte sum — which
-  points to a block-oriented (XMODEM/YMODEM-style) download.
-- **Not published / not fully known:** the exact block size, the block header and
-  opcodes, and the acknowledge/retry handshake. These live in the bootloader (the first
-  0x2000 of flash), which is not part of the distributed application image. Recovering
-  them needs a bootloader dump from a device (for example over SWD).
+- The updater sends it through the **same protocol stack it uses for the live link**
+  (the vendor's generic frame/table transport). For the firmware path the updater pulls
+  in only `Aes::decrypt` + `uncompress` (to turn the file into the image) and the normal
+  frame checksum helpers; it does **not** run a separate XMODEM/YMODEM transfer.
+- **Not known from the files we have:** the exact firmware-frame format, the block size,
+  the opcodes and the acknowledge/retry handshake of the download. The device-side
+  acceptor is in the bootloader (the first 0x2000 of flash), which is not part of the
+  distributed application image. Recovering the exact framing needs a bootloader dump
+  from a device (for example over SWD), or a capture of the vendor updater talking to a
+  BMS on the RS485 line.
 
 ### Checksums used across the product
 
@@ -141,5 +143,8 @@ application. So the bootloader waits for the image on RS485 after the reset.
 |---|---|
 | Modbus RTU (RS485) | CRC-16/MODBUS: poly 0xA001 (reflected), init 0xFFFF, low byte first |
 | JK02 (BLE / RS485 frames) | 8-bit sum of the frame bytes |
-| Firmware IAP (bootloader) | CRC-16/XMODEM: poly 0x1021, init 0x0000 |
 | `.jkbms` / `.dsd` file body | none in the body (AES-256-CBC + zlib; a size header and the zlib checksum catch corruption) |
+
+> An earlier version of this page said the firmware download uses CRC-16/XMODEM. That
+> was wrong: `protocore.dll` exports a `crc16_xmodem` helper, but nothing in this build
+> imports or uses it, so it says nothing about the download. Retracted.
