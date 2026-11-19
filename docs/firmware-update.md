@@ -5,9 +5,9 @@ encrypted, how the vendor updater turns a `.jkbms` into the raw image, what the 
 must contain, and how the device is put into its bootloader to receive it.
 
 This page describes the **file format and the PC-side update flow**. It was worked out
-from the vendor updater, not by flashing a device, so the on-wire bootloader transfer
-is only partly known (see section 5). Nothing here was verified by performing an
-update. **Do not flash with anything but the vendor tool unless you fully understand
+by decompiling the vendor updater, not by flashing a device: the bytes the updater sends
+are known completely (section 5), but the bootloader's side (timing, first prompt) is
+not. Nothing here was verified by performing an update. **Do not flash with anything but the vendor tool unless you fully understand
 the bootloader protocol; a bad or interrupted flash bricks a BMS that is managing a
 live battery.**
 
@@ -125,42 +125,66 @@ device), for example:
 If no download arrives within its timeout, it prints `IAP Timeout` and jumps to the
 application. So the bootloader waits for the image on RS485 after the reset.
 
-## 5. Transfer to the bootloader (RS485 Modbus RTU)
+## 5. Transfer to the bootloader (RS485)
 
-The transfer uses the **normal Modbus RTU transport** — there is no separate
-XMODEM/YMODEM download. This was traced through the updater's send path
-(`jk-bms-monitor.exe`, "Start/Force Updating"); it is **not** verified by performing an
-update, and one step is still open (see below).
+The whole update runs on the RS485 port at the normal line settings (115200 8N1; the
+updater does not reconfigure the port). It has two stages: one Modbus RTU command, then
+an **XMODEM (128-byte blocks, 8-bit checksum)** download of the image.
 
-**The send path.** Pressing Start/Force Updating hands the decrypted, trailer-stripped
-image to one send call, which runs on a background worker with a byte progress bar
-(bytes sent / total) and a completion callback `(success, code, sub-code)`. The
-frame serializer builds a standard Modbus RTU frame and writes it to the serial channel:
+This was recovered by decompiling the sender — the vendor updater
+`jk-bms-monitor.exe` ("Start/Force Updating"). The sender fully defines the bytes on
+the wire, so the framing below is complete from the PC side. It was **not** verified by
+performing an update (○); the bootloader (first 0x2000 of flash) is not in the
+distributed image, so its timing and its first prompt byte are not known.
+
+### 5.1 Stage 1 — enter-bootloader command (Modbus)
+
+A Modbus RTU **FC 0x10 write of one register at 0x1626, value 0x0000**:
 
 ```
-[slave addr] [func 0x03 or 0x10] [reg addr hi][lo] [qty hi][lo] ( [byte count][data…] ) [CRC-16/MODBUS lo][hi]
+[slave] 10 16 26 00 01 02 00 00 [CRC-16/MODBUS lo][hi]
+pack address 1:   01 10 16 26 00 01 02 00 00 D6 97
 ```
 
-- Addresses and quantities are big-endian; function codes are only 0x03 / 0x10; the
-  trailing CRC is **CRC-16/MODBUS** (the same checksum as every other RS485 frame).
-  There is no byte-stuffing.
-- **Entering the bootloader is command 0x1626** (block base 0x1000 + 0x626), sent as the
-  reboot step (matches the Modbus 0x1626 / JK02 0xFF in section 4).
+The updater does not wait for or parse a normal Modbus reply to this frame. While the
+0x1626 request is pending, **every byte received on the port goes to the XMODEM handler
+of stage 2** instead of the Modbus parser, with no timeout. The vendor procedure enters
+the bootloader with the power + reset buttons (section 4), and the bootloader then
+starts the download by sending a control byte.
 
-**Acknowledgement model.** The transfer waits for Modbus-style replies and maps the
-result the same way as a normal register write: exception **01** = function code /
-register not supported, **02** = register inaccessible, **03** = data out of
-limit, **04** = CRC error, plus worker-level *timeout*, *canceled* and
-*not-supported-command*. So the bootloader answers like a Modbus slave.
+### 5.2 Stage 2 — image download (XMODEM, checksum variant)
 
-**Still open:** the per-block framing of the image body **after** the 0x1626 reset — the
-block size and how the image bytes are sequenced to the bootloader. In the updater's
-recovered command path the image is attached to the 0x1626 request but the serializer
-skips that inline payload for the 0x1626 address, so the image-streaming step is not
-visible in the PC code we traced; it is consistent with the bootloader (device side, not
-in the distributed image) driving the block transfer after the reset. A capture of the
-vendor updater on the RS485 line during a real update, or a bootloader dump over SWD,
-would show the exact block framing.
+The data sent is the decrypted image **without its 12-byte trailer** (section 2), cut
+into `ceil(size / 128)` blocks. Each block:
+
+```
+01            SOH
+NN            block number = index + 1 (8 bit, wraps after 0xFF)
+~NN           NN XOR 0xFF
+128 bytes     image[index·128 … index·128+127]; the last block is padded with 0xFF
+SS            8-bit sum of the 128 data bytes
+```
+
+On the **last** block the updater appends `04 04 04` (EOT × 3) in the same write. It
+waits 1 ms before each write.
+
+The updater reacts to the newest control byte it receives (it scans each received
+chunk from the end; other bytes, such as the bootloader's text banner, are ignored):
+
+| Byte received | Updater action |
+|---|---|
+| `06` ACK | All blocks sent → **update finished, success**. Otherwise → send the next block. |
+| `15` NAK | Step back one block and send it again (at the start: send block 1). |
+| `18` CAN | Abort, update failed. |
+| `00` | Ignored (stop scanning this chunk). |
+
+`C` (0x43, the CRC-mode request of XMODEM-CRC) is **not** handled: the download is the
+original checksum XMODEM. So the bootloader starts the transfer with NAK (or ACK), and
+acknowledges each block.
+
+Example for the 073 V19.36 image: 102 807 bytes → 102 795 bytes sent → 804 blocks; block 1
+begins `01 01 FE 78 6F 00 20 …` (the application's initial stack pointer 0x20006F78),
+and the last block carries 11 data bytes, 117 × `FF`, its checksum, then `04 04 04`.
 
 ### Checksums used across the product
 
@@ -168,10 +192,11 @@ would show the exact block framing.
 |---|---|
 | Modbus RTU (RS485) | CRC-16/MODBUS: poly 0xA001 (reflected), init 0xFFFF, low byte first |
 | JK02 (BLE / RS485 frames) | 8-bit sum of the frame bytes |
-| **Firmware IAP transfer** | **CRC-16/MODBUS** — the transfer is plain Modbus RTU (see above), not a separate scheme |
+| Firmware update, stage 1 (0x1626 command) | CRC-16/MODBUS |
+| Firmware update, stage 2 (image blocks) | **8-bit sum of the 128 data bytes** (classic XMODEM checksum) |
 | `.jkbms` / `.dsd` file body | none in the body (AES-256-CBC + zlib; a size header and the zlib checksum catch corruption) |
 
-> History: an early draft of this page guessed CRC-16/XMODEM for the download, on the
-> strength of a `crc16_xmodem` export in `protocore.dll`. That was wrong — nothing in
-> the build calls it. Tracing the updater's actual send path showed the transfer is
-> ordinary Modbus RTU with CRC-16/MODBUS, as above.
+> History: earlier versions of this page first guessed CRC-16/XMODEM (from an unused
+> `crc16_xmodem` export in `protocore.dll`), then said the image block framing was
+> unknown. Both were wrong: the image goes as checksum XMODEM (no CRC-16), handled in a
+> separate receive path of the updater that runs only while the 0x1626 command is pending.
