@@ -305,7 +305,7 @@ Each command has a fixed size; send exactly that many registers.
 
 | Addr | Size | Command | Value | Effect | Risk | JK02 |
 |---|---|---|---|---|---|---|
-| 0x1600 | u32 | Voltage calibration | Real pack voltage in mV, measured with a good meter | The BMS computes a new pack voltage factor (0x12DC). The new factor must be 2.95–3.05, or the command is rejected. | Wrong value = wrong voltages | 0x64 |
+| 0x1600 | u32 | Voltage calibration | Real pack voltage in mV, measured with a good meter | The BMS computes a new pack voltage factor (0x12DC). new factor = old × written / measured; outside 2.95–3.05 → exception 03, factor unchanged ✔ | Wrong value = wrong voltages | 0x64 |
 | 0x1604 | u16 | **Shutdown** | any | The board turns off after about 1 s. | Load loses power | 0x65 |
 | 0x1606 | u32 | Current calibration | Real current in mA. Send 0 (or < 51) at zero current to set the zero offset. | Gain must stay within ±20 %. | Wrong value = wrong current and SOC | 0x67 |
 | 0x160A | u16 | Load Li-ion (NMC) preset | any | Overwrites all thresholds, **resets SOC** | High | 0x68 |

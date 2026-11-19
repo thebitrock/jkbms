@@ -201,8 +201,12 @@ Values that are the same in all three presets:
 
 ## 11. Calibration
 
-- **Voltage:** write the real pack voltage (mV) to 0x1600. The BMS computes a new
-  factor (0x12DC). A result outside 2.95–3.05 is rejected. ○
+- **Voltage:** write the real pack voltage (mV) to 0x1600. The BMS computes
+  new factor = old factor (0x12DC) × written mV / measured mV (0x1290). If the new
+  factor is outside 2.95–3.05, the BMS rejects the write with exception 03 and keeps
+  the old factor. The limit is on the absolute factor, not on the change: with a
+  factor of 2.995 you can correct only about −1.5 % to +1.8 %. ✔ (V19.30: 3.06, 3.10,
+  2.94 and 2.90 rejected, factor unchanged)
 - **Current:** at zero current, write 0 to 0x1606 to set the zero offset. Under a known
   current, write the real current (mA) to set the gain. A gain more than 20 % away
   from nominal is rejected. ○
