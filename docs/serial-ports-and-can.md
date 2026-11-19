@@ -43,26 +43,34 @@ and you must change it back from the display or the app.
 
 ## 2. Serial protocol list
 
-All serial protocols use 8N1. ○
+Each number selects a built-in protocol. Names are the vendor client's own
+(English build). All serial protocols use 8N1. Baud is from the firmware ○ except
+number 1 ✔. Numbers shown as placeholders are unused empty slots.
 
-| No. | Baud | Notes |
+| No. | Baud | Protocol |
 |---|---|---|
-| 0 | 115200 | |
-| **1** | **115200** | **JK Modbus RTU slave** (see [Modbus RTU](modbus-rtu.md)) ✔ |
-| 3 | 9600 | Also forced on the second serial port in service mode |
-| 4 | 9600 | |
-| 5 | 115200 | |
-| 6 | 9600 | |
-| 7 | 9600 | |
-| 9 | 9600 | |
-| 10 | 115200 | |
-| 13, 14 | 9600 | |
-| 15 | 115200 | |
-| 21 | 115200 | Used on the second serial port when the pack address is 0 (parallel master ?) |
-| 2, 8, 11, 12, 16–20 | 9600 | Empty slots |
-
-The inverter brand names for these numbers are shown only in the vendor app. Read
-the name for a number there.
+| 0 | 115200 | 4G-GPS Remote module Common protocol V4.2 |
+| **1** | **115200** | **JK BMS RS485 Modbus V1.0** (the slave this repo documents — see [Modbus RTU](modbus-rtu.md)) ✔ |
+| 2 | 9600 | NIU U SERIES |
+| 3 | 9600 | China tower shared battery cabinet V1.1 |
+| 4 | 9600 | PACE_RS485_Modbus_V1.3 |
+| 5 | 115200 | PYLON_low_voltage_Protocol_RS485_V3.5 |
+| 6 | 9600 | Growatt_BMS_RS485_Protocol_1xSxxP_ESS_Rev2.01 |
+| 7 | 9600 | Voltronic_Inverter_and_BMS_485_communication_protocol_20200325 |
+| 8 | 9600 | China tower shared battery cabinet V2.0 |
+| 9 | 9600 | WOW_RS485_Modbus_V1.3 |
+| 10 | 115200 | JK BMS LCD Protocol V2.0 |
+| 11 | 9600 | UART1 User customization |
+| 12 | 9600 | UART2 User customization |
+| 13 | 9600 | (9600)JK BMS RS485 Modbus V1.0 |
+| 14 | 9600 | (9600)PYLON_low_voltage_Protocol_RS485_V3.5 |
+| 15 | 115200 | JK BMS PBxx SERIES LCD Protocol V1.0 |
+| 16 | 9600 | JK BMS LIN BUS V1.0 |
+| 17 | 9600 | *(empty slot)* |
+| 18 | 9600 | *(empty slot)* |
+| 19 | 9600 | *(empty slot)* |
+| 20 | 9600 | *(empty slot)* |
+| 21 | 115200 | Set on the second serial port when the pack address is 0 (parallel master ?). Not in the client dropdown. |
 
 ## 3. CAN
 
@@ -99,6 +107,35 @@ current limits. The CAN protocol library version is the high byte of 0x1506
    byte (the first serial port protocol). Example: keep it = 1 and select CAN 4 →
    write `01 04` to 0x14B2. ○
 3. Set the same bit rate on the inverter.
+
+
+### CAN protocol numbers
+
+Names from the vendor client (English build); placeholders are unused slots. [client]
+
+| No. | Protocol |
+|---|---|
+| 0 | JK BMS CAN Protocol (250K) V2.0 |
+| 1 | Deye Low-voltage hybrid inverter CAN communication protocol V1.0 |
+| 2 | PYLON-Low-voltage-V1.2 |
+| 3 | Growatt BMS CAN-Bus-protocol-low-voltage_Rev_05 |
+| 4 | Victron_CANbus_BMS_protocol_20170717 |
+| 5 | MEGAREVO_Hybird_BMSCAN_Protocol_V1.0 |
+| 6 | JK BMS CAN Protocol (500K) V2.0 |
+| 7 | INVT BMS CAN Bus protocol V1.02 |
+| 8 | GoodWe LV BMS Protocol (EX/EM/S-BP/BP) |
+| 9 | FSS-ConnectingBat-TI-en-10 \| Version 1.0 |
+| 10 | MUST PV1800F-CAN communication Protocol1.04.04 |
+| 11 | LuxpowerTek Battery CAN protocol V01 |
+| 12 | CAN BUS User customization |
+| 13 | CAN BUS User customization 2 |
+| 14 | *(empty slot)* |
+| 15 | *(empty slot)* |
+| 16 | *(empty slot)* |
+| 17 | *(empty slot)* |
+| 18 | *(empty slot)* |
+| 19 | *(empty slot)* |
+| 20 | *(empty slot)* |
 
 ## 4. Pack address and parallel packs
 
