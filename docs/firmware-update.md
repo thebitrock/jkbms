@@ -78,9 +78,12 @@ updater reads these parts before it will upload:
 | **last 12 bytes (trailer)** | `[int64 LE: build timestamp, ms since epoch][int32 LE: validity, hours]` |
 
 - The updater requires the image to be at least 0x260 bytes.
-- **Firmware files expire.** The updater rejects the file ("Binary file is invalid!")
-  if the PC clock is earlier than `build_ts − 2 h` or later than
-  `build_ts + validity_h`. Set the PC clock correctly, or a valid file is refused.
+- **Validity field.** `validity_h` is **0 on the official release files** (checked on the
+  073 images for V19.34 and V19.36), meaning **no expiry** — which matches the vendor's
+  download page. The updater only applies a time window (reject if the PC clock is before
+  `build_ts − 2 h` or after `build_ts + validity_h`) when `validity_h` is non-zero, which
+  is not the case for the public releases. (`build_ts` still decodes to the real build time,
+  e.g. V19.36 = 2026-09-07; it is stored in China local time, +8 h, like the RTC.)
 - The 12-byte trailer is stripped; the body (image minus 12 bytes) is what is uploaded.
 
 > Note on the base address: the application image loads at 0x08002000. The first

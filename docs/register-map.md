@@ -367,9 +367,9 @@ Each command has a fixed size; send exactly that many registers.
 | 0x1624 | u16 | Send log frame (JK02 type 0x05) | any | Same as 0x161C ✔ | None | 0xA1 |
 | 0x1626 | u16 | Reboot (into update mode ?) | any | | **Do not use** | 0xFF |
 | 0x1628, 0x162A, 0x162C, 0x162E | — | Service and factory functions | — | — | **Do not use** | 0xC4, 0xFE, 0xC5, 0x6D |
-| 0x1630 | u16 | SOC calibration ? | 1–99 % | **Not supported on V19.30:** exception 02 over Modbus, status 2 over Bluetooth ✔ | — | 0x6E |
-| 0x1632 | u16 | SOH calibration ? | 50–100 % | **Not supported on V19.30:** exception 02 over Modbus, status 2 over Bluetooth ✔ | — | 0x6F |
-| 0x1634 | u32 | Not documented | ≤ 20000000 | | Do not use | 0x70 |
+| 0x1630 | u16 | SOC calibration | 1–99 % | **Firmware V19.36+ feature** (vendor release notes: "Added SOC calibration"); the V19.30 test unit returns exception 02 / BLE status 2 ✔ | — | 0x6E |
+| 0x1632 | u16 | SOH / capacity calibration | 50–100 % | **Firmware V19.36+ feature** (vendor release notes: "battery capacity calibration"); V19.30 returns exception 02 / BLE status 2 ✔ | — | 0x6F |
+| 0x1634 | u32 | Cycle-capacity write ? | ≤ 20000000 | **Firmware V19.36+** (vendor release notes: "cycle capacity writing"); exact field unconfirmed | Do not use on V19.30 | 0x70 |
 
 Checked on a device ✔: 0x1610, 0x1612, 0x1616, 0x161C, 0x161E, 0x1620, 0x1622, 0x1624,
 and 0x1630 / 0x1632 (not supported). A read of 0x1600 gives exception 02 ✔. The other
