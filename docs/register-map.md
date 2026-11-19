@@ -230,7 +230,7 @@ value was decoded and checked against other readings.
 | 0x12F8 | s16 | 0.1 °C | Battery temperature 3 | 194 | ✔ |
 | 0x12FA | s16 | 0.1 °C | Battery temperature 4 | 174 | ✔ |
 | 0x12FC | s16 | 0.1 °C | Battery temperature 5 | 178 | ✔ |
-| 0x1300 | u32 | s | Real-time clock, seconds since 2020-01-01 00:00. Set with command 0x1612. | 217226343 | ✔ |
+| 0x1300 | u32 | s | Real-time clock, seconds since 2020-01-01 00:00. **Local wall-clock time, not UTC** — the stored zone is whatever the last setter used (factory-set to China local, UTC+8). Set with command 0x1612. | 217226343 | ✔ |
 | 0x1304 | u32 | — | Not documented | 166 | |
 | 0x1308 | u32 | s | Time until the BMS goes to sleep (= smart-sleep delay × 3600 after a write of 0x1118) | 86400 | ✔ |
 
@@ -312,7 +312,7 @@ Each command has a fixed size; send exactly that many registers.
 | 0x160C | u16 | Load LiFePO4 preset ✔ | any | Overwrites all thresholds, **resets SOC** ✔ | High | 0x69 |
 | 0x160E | u16 | Load LTO preset | any | Overwrites all thresholds, **resets SOC** | High | 0x6A |
 | 0x1610 | u16 | Emergency start (toggle) ✔ | any | Turns the discharge MOS on for the emergency duration (0x1506 low byte) while a protection is active. A second write cancels it. ✔ (0x12D4 started at 30 min and went to 0 after the second write) | Bypasses protection | 0x6B |
-| 0x1612 | u32 | Set the clock ✔ | Seconds since 2020-01-01 00:00 | Sets 0x1300 (checked with +1, +60, +600 s) | Low | 0x6C |
+| 0x1612 | u32 | Set the clock ✔ | Seconds since 2020-01-01 00:00, **local wall-clock (not UTC)** | Sets 0x1300 (checked with +1, +60, +600 s; the JK app writes PC local time) | Low | 0x6C |
 | 0x1616 | u16 | Restart ✔ | any | Replies, then restarts. The boot loader prints a short text banner on RS485 before the application starts. Modbus answered again within about 1 s; the power-on count went up by 1. Settings and SOC are kept. | Short power loss of the BMS logic | 0x66 |
 | 0x1618 | u16 | **Factory reset** (keeps calibration) | any | All settings return to defaults | High | 0x9D |
 | 0x161A | u16 | **Full factory reset** (also clears calibration) | any | Voltage and current accuracy is lost | **Very high** | 0xA3 |
