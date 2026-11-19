@@ -153,12 +153,16 @@ cell count.
 | 0x110C | u32 | Discharge pre-charge time | 0–300 s | 5 | 5 | W ✔ | 0x25 |
 | 0x1110 | u32 | Not documented (factory constant ?) | — | 500000 | 500000 | — ○ | — |
 | 0x1114 | u16 | Function switches | bitfield below | 0x1010 | 0x1200 | W ✔ (bits 4, 6) | 0xBE (all) / per bit |
-| 0x1116 | s8 pair | Heating start temperature (high byte), heating stop temperature (low byte) | −40…100 °C each; start < stop | −10 / 0 | −10 / 0 | W ✔ (same value) | 0xBF (both), 0x37 / 0x38 |
+| 0x1116 | s8 pair | Heating start temperature (high byte), heating stop temperature (low byte) | −40…100 °C each; start < stop | −10 / 0 | −10 / 0 | W ✔ | 0xBF (both), 0x37 / 0x38 |
 | 0x1118 | U8+U8 | Smart-sleep delay (high byte) | 1–100 h. A write also restarts the sleep countdown 0x1308. ✔ | 24 | 24 | W ✔ (same value) | 0x39 |
 | 0x1120 | — | Reserved | — | — | — | — | — |
 | 0x1122 | s8 pair | Discharge low-temperature protection (high byte) / recovery (low byte) ? (−20 / −15 °C on the test device; same-value write accepted ✔) | −40…100 °C each; protection < recovery | −35 / −30 | −20 / −15 | W ○ | 0xC6 (both), 0x3A / 0x3B |
 
-The heating temperatures act only when heating is enabled (0x1114 bit 0). The
+The heating temperatures act only when heating is enabled (0x1114 bit 0). With heating
+enabled, start/stop set to 25 / 30 °C and the cells at 19.8 °C, the heater did **not**
+start within 8 s while the pack carried no current: 0x12D0 low byte stayed 0 and 0x12E6
+stayed 0 mA. The likely reason is that the heater runs only while a charger is present;
+this is not confirmed. ○ The
 example values were consistent with the smart-sleep countdown: 0x1118 = 24 h and
 0x1308 = 86400 s. ✔
 
@@ -166,7 +170,7 @@ example values were consistent with the smart-sleep countdown: 0x1118 = 24 h and
 
 | Bit | Mask | Function when 1 | Writable | JK02 | Default | Example |
 |---|---|---|---|---|---|---|
-| 0 | 0x0001 | Heating enabled | yes | 0x27 | 0 | 0 |
+| 0 | 0x0001 | Heating enabled | yes ✔ | 0x27 | 0 | 0 |
 | 1 | 0x0002 | Battery temperature sensors disabled | yes | 0x28 | 0 | 0 |
 | 2 | 0x0004 | GPS heartbeat check | **no** | — | 0 | 0 |
 | 3 | 0x0008 | Shared port is RS485 (0 = CAN) | **no** | — | 0 | 0 |
