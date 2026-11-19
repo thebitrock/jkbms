@@ -234,21 +234,40 @@ value was decoded and checked against other readings.
 | 0x1304 | u32 | — | Not documented | 166 | |
 | 0x1308 | u32 | s | Time until the BMS goes to sleep (= smart-sleep delay × 3600 after a write of 0x1118) | 86400 | ✔ |
 
-**0x12A0 alarm bits:** ○ (all 0 on the test pack)
+**0x12A0 alarm bits** (the `sysAlarm` word; names from the vendor client model, so
+authoritative for meaning — all 0 on the test pack, so bit positions not device-checked):
 
 | Bit | Alarm | Bit | Alarm |
 |---|---|---|---|
-| 0 | Balance wire resistance | 11 | Cell UVP |
-| 1 | MOSFET over-temperature | 12 | Battery UVP |
-| 2 | Cell quantity mismatch | 13 | Discharge OCP |
-| 3 | Current sensor error | 14 | Discharge short circuit |
-| 4 | Cell OVP | 15 | Discharge over-temperature |
-| 5 | Battery OVP | 16 | Charge MOS fault |
-| 6 | Charge OCP | 17 | Discharge MOS fault |
-| 7 | Charge short circuit | 18 | GPS disconnected |
-| 8 | Charge over-temperature | 19 | Change the password in time |
-| 9 | Charge under-temperature | 20 | Discharge on failed |
-| 10 | Internal communication error | 21 | Battery over-temperature alarm |
+| 0 | Balance-wire resistance abnormal | 15 | Discharge over-temperature |
+| 1 | MOSFET over-temperature | 16 | Charge MOS not normal |
+| 2 | Cell count ≠ settings | 17 | Discharge MOS not normal |
+| 3 | Current-sensor anomaly | 18 | GPS disconnected |
+| 4 | Battery fully charged (status, not a fault) | 19 | Modify password in time |
+| 5 | Battery over-voltage | 20 | Discharge-on failed |
+| 6 | Charge over-current | 21 | Battery over-temperature alarm |
+| 7 | Charge short-circuit | 22 | Temperature-sensor abnormal |
+| 8 | Charge over-temperature | 23 | Parallel-limiter module abnormal |
+| 9 | Charge under-temperature | 24 | SCP release failed |
+| 10 | CPUAUX anomaly | 25 | Discharge OCP 2 |
+| 11 | Cell under-voltage | 26 | Discharge OCP 3 |
+| 12 | Battery under-voltage | 27 | Discharge under-temperature alarm |
+| 13 | Discharge over-current | 28 | GPS remote lock |
+| 14 | Discharge short-circuit | | |
+
+**0x12C2 user alarm word 2** bits (vendor client model; bit 9 unused):
+
+| Bit | Alarm | Bit | Alarm |
+|---|---|---|---|
+| 0 | Temperature too high | 7 | Temperature-sensor failure |
+| 1 | Temperature too low | 8 | Charger-communication failure |
+| 2 | Temperature difference too large | 10 | Heating-relay failure |
+| 3 | Cell voltage too high | 11 | Charger failure |
+| 4 | Cell voltage too low | 12 | Low-temperature heating failure |
+| 5 | Discharge over-current | 13 | Heater failure |
+| 6 | Charge over-current | | |
+
+The user-alarm word 1 (0x12BA) is not decoded by the vendor client.
 
 ---
 
@@ -305,18 +324,21 @@ buzzer, 0x14E4 low = dry 1, 0x14E6 high = dry 2) selects the watched condition:
 | 5 | Cell under-voltage | mV |
 | 6 | Charge over-current | mA |
 | 7 | Discharge over-current | mA |
-| 8 | Battery over-temperature | 0.1 °C |
-| 9 | MOSFET over-temperature | 0.1 °C |
+| 8 | Battery over-temperature | °C (whole degrees) ✔ |
+| 9 | MOSFET over-temperature | °C (whole degrees) ✔ |
 | 10 | System alarm | — (flag) |
-| 11 | Battery low-temperature | 0.1 °C |
+| 11 | Battery low-temperature | °C (whole degrees) ○ |
 | 12 | Remote control | — (flag) |
 | 13 | Above SOC | % |
 | 14 | MOSFET abnormal | — (flag) |
 
 Names are the vendor app's own labels (English build); the Chinese build matches
 one-to-one. The trigger/release unit depends on the source — voltage sources in mV,
-current in mA, temperature in 0.1 °C, SOC in %; the flag sources (10, 12, 14) have no
-analogue threshold. Units marked ? are inferred (not value-tested on a device).
+current in mA, SOC in %, and **temperature in whole °C** (the raw s32 equals the
+degree count; note this differs from the settings temperature registers, which use
+0.1 °C). The flag sources (10, 12, 14) have no analogue threshold. ✔ on V19.30 for
+the temperature sources (buzzer on source 9 reads 100/95 °C, dry 1 on source 8 reads
+60/50 °C); the %, mV and mA source units are not yet value-tested on a device.
 
 ---
 

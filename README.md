@@ -43,6 +43,9 @@ big-endian; JK02 frames send it little-endian.
   rates, CAN bit rates and frame IDs, pack address and parallel packs.
 - [Device behaviour](docs/device-behaviour.md): protection logic, SOC estimation, what a
   write does, presets, emergency start, EEPROM wear.
+- [Capability catalogue](docs/capabilities.md): every field the BMS exposes (settings,
+  telemetry, device info, logs, event records) with units, ranges, scales and bit/enum
+  meanings, extracted from the vendor client model and cross-checked with the firmware.
 - [Firmware files and update](docs/firmware-update.md): `.jkbms` / `.dsd` file format
   (AES + zlib), raw image layout and expiry, compatibility rules, entering the
   bootloader, and the IAP transfer checksum.
