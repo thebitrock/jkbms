@@ -159,10 +159,11 @@ cell count.
 | 0x1122 | s8 pair | Discharge low-temperature protection (high byte) / recovery (low byte) ? (−20 / −15 °C on the test device; same-value write accepted ✔) | −40…100 °C each; protection < recovery | −35 / −30 | −20 / −15 | W ○ | 0xC6 (both), 0x3A / 0x3B |
 
 The heating temperatures act only when heating is enabled (0x1114 bit 0). With heating
-enabled, start/stop set to 25 / 30 °C and the cells at 19.8 °C, the heater did **not**
-start within 8 s while the pack carried no current: 0x12D0 low byte stayed 0 and 0x12E6
-stayed 0 mA. The likely reason is that the heater runs only while a charger is present;
-this is not confirmed. ○ The
+enabled, start/stop set to 25 / 30 °C and the cells at 19.8 °C, the heater did not
+start while the pack carried no current. Under charge (3.6 A) the 0x12D0 low byte went
+to 1 within 2 s, and back to 0 about 10 s later as the charge current fell to zero
+(SOC 100 %). So heating needs charge current. ✔ The heater current 0x12E6 stayed 0 mA
+on the test device, which has no heater fitted. The
 example values were consistent with the smart-sleep countdown: 0x1118 = 24 h and
 0x1308 = 86400 s. ✔
 
@@ -228,7 +229,7 @@ value was decoded and checked against other readings.
 | 0x12CA | u16 | s | Time until charge short-circuit protection releases | 0 | ✔ |
 | 0x12CC | u16 | s | Time until UVP releases | 0 | ✔ |
 | 0x12CE | u16 | s | Time until OVP releases | 0 | ✔ |
-| 0x12D0 | U8+U8 | bitmask / flag | High byte: temperature-sensor present bits (1 = present). Low byte: heating active. ○ | 0xFF00 | ✔ |
+| 0x12D0 | U8+U8 | bitmask / flag | High byte: temperature-sensor present bits (1 = present). Low byte: heating active (1 = heating). ✔ | 0xFF00 | ✔ |
 | 0x12D2 | u16 | — | Reserved | 0x0100 | |
 | 0x12D4 | u16 | s | Emergency start time left. 0 = not active. | 0 | ✔ |
 | 0x12D6 | u16 | — | Discharge current correction factor | 1 | ✔ |
