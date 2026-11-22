@@ -37,23 +37,20 @@ When the switch **Charging Float Mode** is on, the BMS moves between three stage
 
 ![Charge stages: Bulk, Absorption, Float and the four transitions between them](img/charge-stages.en.svg)
 
-| Stage | The BMS asks the inverter for | How long |
-|---|---|---|
-| **Bulk**, the main charge | RCV × cells | Until the battery voltage is above that value |
-| **Absorption**, the top-up | RCV × cells | Exactly **RCV Time**. The BMS does not look at the voltage during this time |
-| **Float**, the rest | RFV × cells, a lower voltage | No time limit |
+The same in words:
 
-The numbers in the picture:
-
-1. **Bulk → Absorption.** The battery voltage climbs above RCV × cells.
-2. **Absorption → Float.** RCV Time is over, and the battery voltage is still above
-   SOC-100% Volt. × cells.
-3. **Float → Bulk (Re-Bulk).** SOC has fallen by **Re-Bulk SOC** percent since Float
-   began. Example: Float began at 100 % and Re-Bulk SOC is 10. At 90 % the BMS asks
-   for the full charge voltage again.
-4. **Absorption → Bulk.** RCV Time is over, but the battery voltage is not above
-   SOC-100% Volt. × cells. This happens when a big load pulls the battery down. The
-   BMS starts again from Bulk.
+- **Bulk**, the main charge. The BMS asks for RCV × cells. When the battery voltage
+  climbs above that value, Absorption starts (①).
+- **Absorption**, the top-up. The BMS asks for the same voltage for exactly
+  **RCV Time**. It does not look at the battery voltage during this time. When the
+  time is over, it makes one check:
+  - ② the battery voltage is above SOC-100% Volt. × cells: Float starts;
+  - ④ it is not, for example because a big load pulls the battery down: the BMS
+    starts again from Bulk.
+- **Float**, the rest. The BMS asks for a lower voltage, RFV × cells. Float has no
+  time limit. It ends when SOC has fallen by **Re-Bulk SOC** percent since Float
+  began (③, this is the Re-Bulk). Example: Float began at 100 % and Re-Bulk SOC
+  is 10. At 90 % the BMS goes back to Bulk and asks for the full charge voltage again.
 
 When Charging Float Mode is **off**, there are no stages. The BMS always asks for
 RCV × cells.
