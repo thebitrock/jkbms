@@ -20,8 +20,9 @@
 </p>
 
 Unofficial developer documentation for the communication protocols of **JK-BMS**
-(Jikong, also written JK BMS or JKBMS) **PB-series** protection boards, the
-"Inverter BMS" family. It was written for the **JK-PB2A16S20P** and checked on one.
+(Jikong, also written JK BMS or JKBMS) **PB-series** protection boards, which
+sellers often list as the "JK Inverter BMS". It was written for the
+**JK-PB2A16S20P** and checked on one.
 
 It explains how to read cell voltages, current, temperatures, SOC and alarms from
 the BMS, how to write settings, and how to send commands:
@@ -98,7 +99,7 @@ Response:  01 03 04 00 00 D0 20 A6 2B
 | `00 00 D0 20` | 0x0000D020 = 53 280 mV = 53.28 V |
 | `A6 2B` | CRC-16 |
 
-Three rules that differ from most Modbus devices:
+Three rules to know:
 
 - Addresses are byte offsets: one 16-bit register moves the address by 2.
 - The function codes are 0x03 (read) and 0x10 (write). The BMS has no others.
