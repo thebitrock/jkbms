@@ -250,7 +250,7 @@ value was decoded and checked against other readings.
 | 0x1304 | u32 | — | Not documented | 166 | |
 | 0x1308 | u32 | s | Time until the BMS goes to sleep (= smart-sleep delay × 3600 after a write of 0x1118) | 86400 | ✔ |
 | 0x1310 | u16 | s | Time in the current charge stage (vendor name: Charge Status Time). 0 in Bulk; restarts at each stage change. See [Charge stages](charging-and-soc.md). | 810 | ✔ |
-| 0x1312 | U8+U8 | — | High byte: charge stage (vendor name: Charge Status): 0 = Bulk ○, 1 = Absorption ✔, 2 = Float ✔. Always 0 when charging float mode is off ○. Low byte: not documented. | 0x0100 | ✔ |
+| 0x1312 | U8+U8 | — | High byte: charge stage (vendor name: Charge Status): 0 = Bulk ✔, 1 = Absorption ✔, 2 = Float ✔. Always 0 when charging float mode is off ○. Low byte: not documented. | 0x0100 | ✔ |
 
 **0x12A0 alarm bits** (the `sysAlarm` word; names from the vendor client model, so
 authoritative for meaning — all 0 on the test pack, so bit positions not device-checked):
@@ -326,7 +326,7 @@ publish dumps of 0x1400–0x14AF.
 | 0x1504 | U8+U8 | High byte: **RCV time** (time at RCV before the change to RFV). Low byte: **RFV time** (same 0.1 h unit); not writable through this register ✔ and not used since V19.10, which removed the RFV timer ○. | 1–250 × 0.1 h | 0x0532 (0.5 h) | W ✔ (high byte stored, low byte ignored) | 0xC2, 0xB3 |
 | 0x1506 | U8+U8 | High byte: CAN protocol library version (read only, a changed high byte is not stored ✔). Low byte: emergency start duration. **A write also arms the emergency start** with the new duration ✔. | 1–30 min | 0x011E (30 min) | W ✔ (29, back to 30; then cancel with 0x1610) | 0xB5 |
 | 0x1508 | U8 + 7 bytes | Protocol number of the third serial port, then its 7-byte enable bitmap | < 32 and enabled | | W ○ | 0xB6 |
-| 0x1510 | U8+U8 | High byte: **Re-Bulk SOC**, %: the SOC drop, counted from the SOC at the entry to Float, that ends Float and starts a new Bulk (see [Charge stages](charging-and-soc.md)); an invalid stored value becomes 1 ○. Low byte and 0x1512–0x1523: a RAM copy of the settings bytes 0x1111–0x1123 (0x1110 constant, 0x1114, 0x1116, 0x1118, 0x1122). The copy is 0 after a start-up and is filled by the next settings write. ✔ | 1–50 (high byte) | 0x0100 after start-up | W ○ | 0xC7 / 0xB7 |
+| 0x1510 | U8+U8 | High byte: **Re-Bulk SOC**, %: the SOC drop, counted from the SOC at the entry to Float, that ends Float and starts a new Bulk ✔ (seen with the value 1; see [Charge stages](charging-and-soc.md)); an invalid stored value becomes 1 ○. Low byte and 0x1512–0x1523: a RAM copy of the settings bytes 0x1111–0x1123 (0x1110 constant, 0x1114, 0x1116, 0x1118, 0x1122). The copy is 0 after a start-up and is filled by the next settings write. ✔ | 1–50 (high byte) | 0x0100 after start-up | W ○ | 0xC7 / 0xB7 |
 
 Each dry contact and the buzzer switch on when the selected source crosses the
 trigger value and switch off at the release value. The source byte (0x14E4 high =

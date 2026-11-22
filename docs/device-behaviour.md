@@ -161,7 +161,7 @@ Values that are the same in all three presets:
   and Float: Absorption starts when the pack is above RCV × cell count and lasts the
   RCV time (0x1504 high byte, × 0.1 h) ✔; then the request changes to RFV × cell count
   if the pack is above SOC 100 % voltage × cell count ✔. Float has no time limit and
-  ends when SOC falls by Re-Bulk SOC (0x1510 high byte) ○. The stage and the time in
+  ends when SOC falls by Re-Bulk SOC (0x1510 high byte) ✔. The stage and the time in
   it are in 0x1312 / 0x1310 ✔. Pictures and the exact logic:
   [How the BMS charges: stages and SOC](charging-and-soc.md).
 - Charge and discharge current limits sent to the inverter come from the

@@ -143,8 +143,8 @@ BMS asks for the same voltage as before. Or the inverter does not take its charg
 voltage from the BMS.
 
 **Float ends almost at once.** Re-Bulk SOC is 1. The BMS returns to Bulk as soon
-as SOC shows 99 %, which is about half a percent of the capacity. Set a larger
-value if Float must survive small loads.
+as SOC shows 99 %, which is about half a percent of the capacity. This was seen on
+the test battery. Set a larger value if Float must survive small loads.
 
 **SOC stays at 99 %.** SOC waits there for the sign described in 1.4. The usual
 reasons:
@@ -189,13 +189,14 @@ What was checked:
 
 | Statement | |
 |---|---|
-| 0x1312 shows the stage (values 1 and 2 seen) and 0x1310 the seconds in it | ✔ |
+| 0x1312 shows the stage (0, 1 and 2 seen) and 0x1310 the seconds in it (0 in Bulk) | ✔ |
 | Absorption lasts RCV Time; the pack voltage is not checked during it | ✔ |
 | Absorption → Float when the pack is above SOC-100% Volt. × cells at the end | ✔ (seen once) |
-| Float is not left by time (62 min seen) or by voltage (pack both below SOC-100% Volt. × cells and above RCV × cells seen) | ✔ |
+| Float is not left by time (77 min seen) or by voltage (pack below SOC-100% Volt. × cells, above RCV × cells and down near RFV × cells seen) | ✔ |
+| Float → Bulk when SOC has fallen by Re-Bulk SOC since Float began | ✔ (seen once: Re-Bulk SOC 1, SOC 100 % → 99 %) |
 | The pack voltage 0x1290 is the sum of the cell voltages | ✔ (within 1 mV) |
-| SOC is rounded to the nearest percent | ✔ (99 978 of 100 000 mAh shows 100 %) |
-| Bulk → Absorption, Absorption → Bulk, Float → Bulk (Re-Bulk) | ○ |
+| SOC is rounded to the nearest percent | ✔ (99 548 of 100 000 mAh shows 100 %, 99 497 shows 99 %) |
+| Bulk → Absorption, Absorption → Bulk | ○ |
 | The voltage that goes to the inverter in each stage | ○ |
 | SOC to 100 % and to 0 %, and the limits of counting | ○ |
 | Address 0 with Charging Float Mode on: SOC 100 % only when Float begins | ○ (the test device has address 1; one owner with Charging Float Mode on reported no jump to 100 % before Absorption) |
@@ -276,8 +277,8 @@ Notes:
   below RCV × cells and even below SOC-100% Volt. × cells: only the value at the
   end counts. ✔
 - `soc_ref` is taken during the first 3 s of Float and is not updated later. ○
-- In Float the pack voltage has no effect. ✔ Float ends only by the SOC drop, or
-  when Charging Float Mode is turned off. ○
+- In Float the pack voltage has no effect. ✔ Float ends by the SOC drop ✔, or when
+  Charging Float Mode is turned off ○.
 - With Charging Float Mode off, 0x1312 is 0 and 0x1310 is not updated. ○
 - `request` goes into the summary that the inverter protocols read. The protocol
   encoders that were examined send it as the charge voltage limit in units of 0.1 V
@@ -373,11 +374,12 @@ Volt. 3445 mV (× 16 = 55.12 V), RCV Time 0.5 h, SOC 100 %:
 | 12:02:44 | 2 Float | 1905 s | 55.016 V | −0.6 A | Below SOC-100% Volt. × 16: still Float |
 | 12:17:49 | 2 Float | 2810 s | 55.233 V | 0 A | Above RCV × 16: still Float |
 | 12:32:54 | 2 Float | 3715 s | 55.190 V | −0.4 A | Still Float after 62 min |
+| 12:47:58 | 2 Float | 4620 s | 53.676 V | +0.6 A | SOC 100 % (remaining 99 548 mAh) |
+| 12:53:30 | 0 Bulk | 0 s | 53.677 V | +0.7 A | SOC 99 % (99 497 mAh): Re-Bulk, with Re-Bulk SOC = 1 |
 
 ### 2.7 Not checked yet
 
-- The start of Absorption, the return from Absorption to Bulk, and Re-Bulk from
-  Float.
+- The start of Absorption and the return from Absorption to Bulk.
 - The voltage that the inverter really receives in each stage.
 - The SOC rules of section 2.4 on a device, for address 0 and for the other
   addresses.
