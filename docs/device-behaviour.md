@@ -40,7 +40,8 @@ protection: a MOS is on only when its switch is 1 and no protection is active.
   remaining capacity is set to full ✔ (seen on address 1 with charging float mode
   on). Exception: a pack with address 0 and charging float mode on sets it to full at
   the change from Absorption to Float instead ○ (an owner report agrees). Charge is
-  not counted near full ✔ (seen at 99.87–99.99 %; the limit of 99 % is ○). When the lowest cell stays at or below the SOC 0 % voltage
+  not counted above about 99 % ✔ (counted at 98.8 %, not at 99.3 %), and after 100 %
+  the rule does not work again while SOC shows 99 % ✔. When the lowest cell stays at or below the SOC 0 % voltage
   (0x101C) for 4 s, it is set to 0, and discharge is not counted below 1 % ○. Details
   and pictures:
   [How the BMS charges: stages and SOC](charging-and-soc.md).
@@ -162,7 +163,8 @@ Values that are the same in all three presets:
 - With charging float mode on (0x1114 bit 9), the BMS goes through Bulk, Absorption
   and Float: Absorption starts when the pack gets above RCV × cell count (it does not
   have to stay there ✔) and lasts the RCV time (0x1504 high byte, × 0.1 h) ✔; then the request changes to RFV × cell count
-  if the pack is above SOC 100 % voltage × cell count ✔. Float has no time limit and
+  if the pack is above SOC 100 % voltage × cell count ✔; if it is not, the stage returns
+  to Bulk ✔. Float has no time limit and
   ends when SOC falls by Re-Bulk SOC (0x1510 high byte) ✔. The stage and the time in
   it are in 0x1312 / 0x1310 ✔. Pictures and the exact logic:
   [How the BMS charges: stages and SOC](charging-and-soc.md).
