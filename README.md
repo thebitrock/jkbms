@@ -49,7 +49,7 @@ Float), the SOC counter, balancing, and the format of the firmware files.
 ## Interfaces
 
 ```mermaid
-flowchart LR
+flowchart TD
     M["PC or PLC"] -- "Modbus RTU<br/>RS485, 115200 8N1" --> BMS
     B["Phone or ESP32"] -- "Bluetooth LE<br/>JK02 frames" --> BMS
     BMS["JK-PB BMS"] -- "CAN or serial<br/>inverter protocol" --> INV["Inverter"]
