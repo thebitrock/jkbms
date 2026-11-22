@@ -107,8 +107,9 @@ the BMS:
 
 | Your BMS | When SOC becomes 100 % |
 |---|---|
-| Charging Float Mode **on** and address **0** | When Float begins. SOC shows 99 % during the whole Absorption. The picture in 1.2 shows this case. |
-| Charging Float Mode **off**, or address **1–15** | When the highest cell has stayed at SOC-100% Volt. or above for 4 seconds. With usual settings this is about the moment Absorption starts, or a little earlier. |
+| Charging Float Mode **on**, address **0** | When Float begins. SOC shows 99 % during the whole Absorption. The picture in 1.2 shows this case, and an owner saw exactly this on his master battery. |
+| Charging Float Mode **on**, address **1–15** | Not settled. The firmware that was read (V19.34) uses the rule of the next row. But the same owner saw his second battery, with address 1, also wait at 99 % until Float began. |
+| Charging Float Mode **off** | When the highest cell has stayed at SOC-100% Volt. or above for 4 seconds. With usual settings this is about the moment the battery reaches the RCV voltage. |
 
 On the way down SOC stops at 1 %. It becomes **0 %** when the lowest cell has stayed
 at SOC-0% Volt. or below for 4 seconds. This rule is the same for every address.
@@ -150,12 +151,12 @@ the test battery. Set a larger value if Float must survive small loads.
 **SOC stays at 99 %.** SOC waits there for the sign described in 1.4. The usual
 reasons:
 
-1. Charging Float Mode is on and the address is 0. SOC becomes 100 % only when Float
-   begins. If the battery does not reach Float (see the first question), SOC does
-   not reach 100 %.
-2. In the other cases the highest cell must hold SOC-100% Volt. for 4 seconds. If it
-   never does, the charge voltage is too low for the cells, or SOC-100% Volt. is set
-   too high.
+1. Charging Float Mode is on. On address 0, and by one owner's report also on a
+   second battery with address 1, SOC becomes 100 % only when Float begins. If the
+   battery does not reach Float (see the first question), SOC does not reach 100 %.
+2. With Charging Float Mode off, the highest cell must hold SOC-100% Volt. for
+   4 seconds. If it never does, the charge voltage is too low for the cells, or
+   SOC-100% Volt. is set too high.
 3. The battery was at 100 %, lost about 1 %, and was charged again. The BMS does not
    count charge above 99 %, and the 100 % rule works again only after SOC has fallen
    to 98 % or lower. Until then SOC shows 99 %. This does no harm.
@@ -200,7 +201,8 @@ What was checked:
 | Bulk → Absorption, Absorption → Bulk | ○ |
 | The voltage that goes to the inverter in each stage | ○ |
 | SOC to 100 % and to 0 %, and the limits of counting | ○ |
-| Address 0 with Charging Float Mode on: SOC 100 % only when Float begins | ○ (the test device has address 1; one owner with Charging Float Mode on reported no jump to 100 % before Absorption) |
+| Address 0 with Charging Float Mode on: SOC 100 % only when Float begins | ○ on the test device, which has address 1. Owner report: a master with address 0 showed 99 % to the end of Absorption and 100 % exactly at the change to Float |
+| Address 1–15 with Charging Float Mode on: the 4 s rule | ○, **in doubt**. The same owner's second battery, with address 1, also jumped to 100 % only at the change to Float. His firmware version is not known |
 
 ### 2.2 Registers
 
@@ -333,6 +335,11 @@ Notes:
 - After a reset to 100 %, the rule can fire again only after SOC has fallen below
   99 %, or the highest cell has fallen below 90 % of SOC-100% Volt. After a reset
   to 0 %, only after the lowest cell has risen above 105 % of SOC-0% Volt. ○
+- The address test in the first block is what V19.34 does. An owner with two packs
+  (addresses 0 and 1, Charging Float Mode on, firmware version not known) saw both
+  show 99 % to the end of Absorption and 100 % exactly at the change to Float. That
+  agrees with the pseudo-code for address 0 and disagrees with it for address 1.
+  Other firmware versions may not have the address test.
 - A pack with address 0 and Charging Float Mode on does not use the 4 s rule. Its
   SOC becomes 100 % at the change from Absorption to Float. If the check at the end
   of RCV Time fails and the stage returns to Bulk, SOC stays at 99 % until a later
@@ -382,7 +389,7 @@ Volt. 3445 mV (× 16 = 55.12 V), RCV Time 0.5 h, SOC 100 %:
 
 - The start of Absorption and the return from Absorption to Bulk.
 - The voltage that the inverter really receives in each stage.
-- The SOC rules of section 2.4 on a device, for address 0 and for the other
-  addresses.
+- The SOC rules of section 2.4 on a device. The rule for addresses 1–15 with
+  Charging Float Mode on is in doubt (see 2.1).
 - The stage after a restart of the BMS.
 - Packs in parallel: how the master combines the requests of the packs.

@@ -38,7 +38,8 @@ protection: a MOS is on only when its switch is 1 and no protection is active.
   remaining / full. ✔
 - When the highest cell stays at or above the SOC 100 % voltage (0x1018) for 4 s, the
   remaining capacity is set to full. Exception: a pack with address 0 and charging
-  float mode on sets it to full at the change from Absorption to Float instead. When
+  float mode on sets it to full at the change from Absorption to Float instead (an
+  owner saw this on addresses 0 and 1). When
   the lowest cell stays at or below the SOC 0 % voltage (0x101C) for 4 s, it is set
   to 0. Counting alone keeps SOC between 1 % and 99 %. ○ Details and pictures:
   [How the BMS charges: stages and SOC](charging-and-soc.md).
