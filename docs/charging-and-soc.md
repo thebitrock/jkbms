@@ -117,12 +117,13 @@ This is why SOC can sit at 99 % for a while and then jump to 100 %. The jump als
 removes the small errors that counting collects over many days.
 
 **Which address does my BMS have?** The address is set with the four small DIP
-switches on the BMS. All switches off is address 0. The vendor manual calls address 0
-the host (master) and addresses 1–15 the slaves; in a set of parallel batteries the
-master is the one that is connected to the inverter. A single battery with all
-switches off also has address 0. The vendor software shows the address as
-Device Addr., and it is the two digits at the end of the Bluetooth name (`-00`,
-`-01`, …). The test battery on this page has address 1.
+switches on the BMS. All switches off is address 0. In a set of parallel batteries
+address 0 is the host (master) and addresses 1–15 are the slaves; this comes from
+summaries of the vendor manual. Owners report that the host is the BMS connected to
+the inverter, and that a single battery is normally left at address 0. The vendor
+software shows the address as Device Addr., and it is the two digits at the end of
+the Bluetooth name (`-00`, `-01`, …). The test battery on this page has address 1,
+so the address 0 case was not checked on it.
 
 ### 1.5 Common questions
 

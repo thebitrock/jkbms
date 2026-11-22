@@ -153,7 +153,7 @@ cell count.
 
 | Addr | Type | Name | Values | Default | Example | W | JK02 |
 |---|---|---|---|---|---|---|---|
-| 0x1108 | u32 | Pack address (DevAddr) | Set by DIP switches (all off = 0). The vendor manual calls 0 the host and 1–15 the slaves (see [Serial ports](serial-ports-and-can.md#4-pack-address-and-parallel-packs)). | 1 | 1 | — ✔ | — |
+| 0x1108 | u32 | Pack address (DevAddr) | Set by DIP switches (all off = 0). 0 = host of a parallel set, 1–15 = slaves, as the vendor manual is reported to say; not checked (see [Serial ports](serial-ports-and-can.md#4-pack-address-and-parallel-packs)). | 1 | 1 | — ✔ | — |
 | 0x110C | u32 | Discharge pre-charge time | 0–300 s | 5 | 5 | W ✔ | 0x25 |
 | 0x1110 | u32 | Not documented (factory constant ?) | — | 500000 | 500000 | — ○ | — |
 | 0x1114 | u16 | Function switches | bitfield below | 0x1010 | 0x1200 | W ✔ (bits 4, 6) | 0xBE (all) / per bit |

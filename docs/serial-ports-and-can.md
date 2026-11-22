@@ -144,7 +144,7 @@ Names from the vendor client (English build); placeholders are unused slots. [cl
 | Pack address | Set with the DIP switches. Shown at 0x1108. Cannot be written over Modbus or Bluetooth. | ✔ |
 | Modbus slave address | Equal to the pack address. The BMS answers only its own address; it does not answer broadcast (0) or other addresses. | ✔ |
 | Bluetooth name suffix | `-NN` = pack address | ✔ |
-| Address 0 | The second serial port changes to protocol 21. This is assumed to be the parallel-master mode that collects data from the other packs. | ? |
+| Address 0 | The host (master) of a parallel set; addresses 1–15 are slaves. This comes from summaries of the vendor manual and from owner reports, which also say that the host is the BMS connected to the inverter. The second serial port changes to protocol 21, probably to collect the data of the other packs. Not checked on a device (the test pack has address 1). | ○ |
 
 Several packs on one RS485 bus: give each pack a different address (1–15) and poll
 them one after the other from one master.
