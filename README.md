@@ -50,9 +50,9 @@ Float), the SOC counter, balancing, and the format of the firmware files.
 
 ```mermaid
 flowchart LR
-    M["PC, PLC, microcontroller<br/>Modbus RTU master"] -- "RS485, 115200 8N1" --> BMS
-    B["Phone, ESP32, PC<br/>Bluetooth LE central"] -- "JK02 frames" --> BMS
-    BMS["JK-PB BMS<br/>settings · telemetry · device info · commands"] -- "CAN or serial<br/>inverter protocol" --> INV["Inverter"]
+    M["PC or PLC"] -- "Modbus RTU<br/>RS485, 115200 8N1" --> BMS
+    B["Phone or ESP32"] -- "Bluetooth LE<br/>JK02 frames" --> BMS
+    BMS["JK-PB BMS"] -- "CAN or serial<br/>inverter protocol" --> INV["Inverter"]
 ```
 
 | Interface | Protocol | Document |
