@@ -94,6 +94,12 @@ for RCV again when SOC reaches 90 %.
 
 If Charging Float Mode is turned off, the stage returns to Bulk at once. ○
 
+The stage logic never looks at single cells. It uses the pack voltage 0x1290, which
+is the same as comparing the average cell with RCV. One low cell does not restart the
+RCV timer; nothing restarts it. 0x1290 is the BMS's own measurement of the whole pack
+with its calibration factor (0x12DC), so a wrong voltage calibration shifts both
+thresholds (steps 2 and 5).
+
 ## 3. SOC to 100 %
 
 The BMS counts charge in and out (coulomb counter). Counting alone does not bring
