@@ -40,7 +40,7 @@ protection: a MOS is on only when its switch is 1 and no protection is active.
   remaining capacity is set to full ✔ (seen on address 1 with charging float mode
   on). Exception: a pack with address 0 and charging float mode on sets it to full at
   the change from Absorption to Float instead ○ (an owner report agrees). Charge is
-  not counted above 99 % ✔. When the lowest cell stays at or below the SOC 0 % voltage
+  not counted near full ✔ (seen at 99.87–99.99 %; the limit of 99 % is ○). When the lowest cell stays at or below the SOC 0 % voltage
   (0x101C) for 4 s, it is set to 0, and discharge is not counted below 1 % ○. Details
   and pictures:
   [How the BMS charges: stages and SOC](charging-and-soc.md).

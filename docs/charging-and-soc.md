@@ -204,7 +204,7 @@ What was checked:
 | Absorption → Bulk | ○ |
 | The voltage that goes to the inverter in each stage | ○ |
 | SOC 100 % by the 4 s rule on address 1 with Charging Float Mode on | ✔ (seen once, in Bulk: SOC 95 % → 100 %) |
-| Charge is not counted above 99 % | ✔ |
+| Charge is not counted when the remaining capacity is near full | ✔ (seen at 99.87–99.99 %; the limit of 99 % itself is ○) |
 | Bluetooth frame 0x02 bytes 278–279 and 280 = 0x1310 and 0x1312 | ✔ (stages 0, 1 and 2) |
 | SOC to 0 %, the lower limit of counting, the re-arm of the 100 % rule at 98 % | ○ |
 | Address 0 with Charging Float Mode on: SOC 100 % only when Float begins | ○ on the test device, which has address 1. Owner report: a master with address 0 showed 99 % to the end of Absorption and 100 % exactly at the change to Float |
@@ -353,9 +353,10 @@ Notes:
   the change to Float. That agrees with the pseudo-code for address 0. For address 1
   it disagrees with the pseudo-code and with the test device; the reason is not
   known.
-- Charge is not counted above 99 % ✔: during 30 minutes of Absorption 3518 mAh went
-  in and the remaining capacity never rose, while 136 mAh of short discharges took
-  it down by 125 mAh.
+- Charge is not counted near full ✔: in the last 20 minutes of Absorption the
+  remaining capacity was at 99.87–99.99 % of the full capacity. 285 mAh of charge
+  went in and the value never rose, while 136 mAh of short discharges took it down
+  by 125 mAh. That the limit is exactly 99 % comes from the firmware. ○
 - A pack with address 0 and Charging Float Mode on does not use the 4 s rule. Its
   SOC becomes 100 % at the change from Absorption to Float. If the check at the end
   of RCV Time fails and the stage returns to Bulk, SOC stays at 99 % until a later
