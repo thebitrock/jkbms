@@ -132,8 +132,9 @@ so the address 0 case was not checked on it.
 **The battery never reaches Float.** Check in this order:
 
 1. Charging Float Mode is on.
-2. The battery voltage, as the BMS shows it, really gets above RCV × cells. One
-   reading above that value is enough (seen on the test battery). If the
+2. The battery voltage, as the BMS shows it, really gets above RCV × cells. It does
+   not have to stay there: on the test battery Absorption began while the voltage
+   only touched that value for a moment. If the
    inverter stops at that voltage or a little below it, Absorption never starts.
    Compare the voltage in the app with a good meter. If they differ, calibrate the
    BMS voltage in the app. One owner reported that Absorption started only after
@@ -194,11 +195,12 @@ What was checked:
 | Statement | |
 |---|---|
 | 0x1312 shows the stage (0, 1 and 2 seen) and 0x1310 the seconds in it (0 in Bulk) | ✔ |
-| Bulk → Absorption at the first reading above RCV × cells | ✔ (seen once; no 2 s sample reached 55.20 V before the change) |
+| Bulk → Absorption does not need the pack to stay above RCV × cells | ✔ (seen once: it began with the 2 s samples at 54.99–55.19 V and none at 55.20 V) |
+| Bulk → Absorption at one reading strictly above RCV × cells | ○ (the reading itself fell between two samples) |
 | Absorption lasts RCV Time; the pack voltage is not checked during it | ✔ (twice, 1801 s each; the pack was below SOC-100% Volt. × cells in some samples) |
 | Absorption → Float when the pack is above SOC-100% Volt. × cells at the end | ✔ (seen twice) |
 | Float is not left by time (77 min seen) or by voltage (pack below SOC-100% Volt. × cells, above RCV × cells and down near RFV × cells seen) | ✔ |
-| Float → Bulk when SOC has fallen by Re-Bulk SOC since Float began | ✔ (seen once: Re-Bulk SOC 1, SOC 100 % → 99 %) |
+| Float → Bulk when SOC has fallen by Re-Bulk SOC since Float began | ✔ (seen twice: Re-Bulk SOC 1, SOC 100 % → 99 %, both times at 99 497 mAh) |
 | The pack voltage 0x1290 is the sum of the cell voltages | ✔ (within 1 mV) |
 | SOC is rounded to the nearest percent | ✔ (99 548 of 100 000 mAh shows 100 %, 99 497 shows 99 %) |
 | Absorption → Bulk | ○ |
@@ -277,10 +279,11 @@ request = RFV * cells if stage == FLOAT else RCV * cells
 Notes:
 
 - All comparisons with the pack voltage are strict (`>`). A pack that sits exactly
-  on RCV × cells does not start Absorption. ○ The test uses one reading, with no
-  delay and no averaging: on the device the stage stayed Bulk for minutes while
-  the 2 s samples moved between 54.99 V and 55.19 V, and changed at the first
-  reading above 55.20 V. ✔
+  on RCV × cells does not start Absorption. ○ The firmware tests one reading, with
+  no delay and no averaging. ○ The device agrees: Absorption began while the 2 s
+  samples moved between 54.99 V and 55.19 V, and no sample before the change was
+  at 55.20 V or above ✔. So the pack does not have to stay above the threshold;
+  the reading that started Absorption fell between two samples and was not seen.
 - The logic uses only the pack voltage, never a single cell. The pack voltage is
   the sum of the cell readings ✔, so the test is the same as "average cell > RCV".
   The voltage calibration factor (0x12DC, command 0x1600) scales every cell
@@ -414,6 +417,7 @@ A full charge later the same day, from SOC 94 %, read every 2 s:
 | 16:50:06 | 1 Absorption | 1 s | 55.172 V | +33 A | Absorption began at 16:50:05 |
 | 17:20:04 | 1 Absorption | 1799 s | 55.229 V | +0.9 A | 6 of 900 samples were below 55.12 V, the lowest 55.045 V |
 | 17:20:06 | 2 Float | 0 s | 55.247 V | +0.9 A | 1801 s after the start; SOC 100 %, remaining 99 874 mAh |
+| 17:27:27 | 0 Bulk | 0 s | 53.003 V | −2.5 A | Charger off since 17:22; SOC 99 % (99 497 mAh): Re-Bulk again |
 
 ### 2.7 Not checked yet
 

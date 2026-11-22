@@ -160,8 +160,8 @@ Values that are the same in all three presets:
 - The BMS asks the inverter (over CAN or the inverter serial protocol) for
   RCV × cell count as the charge voltage. ○
 - With charging float mode on (0x1114 bit 9), the BMS goes through Bulk, Absorption
-  and Float: Absorption starts when the pack is above RCV × cell count and lasts the
-  RCV time (0x1504 high byte, × 0.1 h) ✔; then the request changes to RFV × cell count
+  and Float: Absorption starts when the pack gets above RCV × cell count (it does not
+  have to stay there ✔) and lasts the RCV time (0x1504 high byte, × 0.1 h) ✔; then the request changes to RFV × cell count
   if the pack is above SOC 100 % voltage × cell count ✔. Float has no time limit and
   ends when SOC falls by Re-Bulk SOC (0x1510 high byte) ✔. The stage and the time in
   it are in 0x1312 / 0x1310 ✔. Pictures and the exact logic:
