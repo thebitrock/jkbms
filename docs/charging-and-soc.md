@@ -1,201 +1,388 @@
-# Charge stages and SOC reset logic
+# How a JK-PB BMS charges: stages and SOC
 
 [Українською](charging-and-soc.uk.md)
 
-How a JK-PB BMS with firmware V19.10 or later decides which charge voltage it asks
-the inverter for (Bulk, Absorption, Float, Re-Bulk), and when it sets SOC to 100 %
-or to 0 %.
+A JK-PB BMS with firmware **V19.10 or later** decides which voltage the inverter
+must charge to (Bulk, Absorption, Float, Re-Bulk) and when the battery counts as
+100 % or 0 % full. This page explains that logic.
 
-Sources and marks:
+- **[Part 1](#part-1-in-plain-words)** is for battery owners. It has no register
+  numbers: only what happens, and which settings matter.
+- **[Part 2](#part-2-technical-details)** is for developers: the exact conditions,
+  the registers, and what was checked on a real battery.
+
+Most of this logic comes from the firmware. Only a part of it was also seen on a real
+battery; [section 2.1](#21-sources-and-marks) says which part.
+
+> This page explains how the firmware behaves. It does not tell you which voltages
+> are right for your cells. Take those from the maker of your cells.
+
+---
+
+## Part 1. In plain words
+
+Words used here: a **cell** is one of the cells connected in series (16 in a
+"48 V" LiFePO4 battery). "**× cells**" means "multiplied by the number of cells":
+3.45 V × 16 = 55.2 V. **SOC** is the charge level in percent.
+
+### 1.1 Three stages
+
+The BMS does not charge the battery itself. It sends the inverter one number: the
+voltage to charge to. For this the inverter must be connected to the BMS with a
+data cable (CAN or RS485) and must be set to take its charge voltage from the BMS.
+If the inverter uses its own voltage settings, the stages still change inside the
+BMS, but the inverter does not follow them.
+
+When the switch **Charging Float Mode** is on, the BMS moves between three stages:
+
+![Charge stages: Bulk, Absorption, Float and the four transitions between them](img/charge-stages.en.svg)
+
+| Stage | The BMS asks the inverter for | How long |
+|---|---|---|
+| **Bulk**, the main charge | RCV × cells | Until the battery voltage is above that value |
+| **Absorption**, the top-up | RCV × cells | Exactly **RCV Time**. The BMS does not look at the voltage during this time |
+| **Float**, the rest | RFV × cells, a lower voltage | No time limit |
+
+The numbers in the picture:
+
+1. **Bulk → Absorption.** The battery voltage climbs above RCV × cells.
+2. **Absorption → Float.** RCV Time is over, and the battery voltage is still above
+   SOC-100% Volt. × cells.
+3. **Float → Bulk (Re-Bulk).** SOC has fallen by **Re-Bulk SOC** percent since Float
+   began. Example: Float began at 100 % and Re-Bulk SOC is 10. At 90 % the BMS asks
+   for the full charge voltage again.
+4. **Absorption → Bulk.** RCV Time is over, but the battery voltage is not above
+   SOC-100% Volt. × cells. This happens when a big load pulls the battery down. The
+   BMS starts again from Bulk.
+
+When Charging Float Mode is **off**, there are no stages. The BMS always asks for
+RCV × cells.
+
+### 1.2 One day as a picture
+
+![One day: the voltage the BMS asks for, the battery voltage and SOC through Bulk, Absorption, Float and Re-Bulk](img/charge-day.en.svg)
+
+Read it from left to right:
+
+- **Morning, Bulk.** The BMS asks for the RCV voltage. The battery fills up and its
+  voltage rises.
+- **① Absorption.** The battery voltage has passed RCV × cells. The BMS keeps asking
+  for the same voltage until RCV Time is over.
+- **② Float.** The BMS now asks for the lower RFV voltage. The inverter stops
+  pushing current into a full battery and only holds it at that lower voltage. In
+  this picture SOC also jumps from 99 % to 100 % here; section 1.4 explains when it
+  does so earlier.
+- **Heavy load, then ③ Re-Bulk.** The load takes more than the sun gives, and SOC
+  falls. When it has fallen by Re-Bulk SOC, the BMS asks for the RCV voltage again.
+  The battery is charged back up while there is still sun.
+- **Evening.** After sunset SOC falls again. The BMS goes back to Bulk, so it asks
+  for the full charge voltage as soon as the sun returns.
+
+Older firmware left Float after a fixed time, RFV Time. A timer does not notice
+that the battery was drained in the middle of the day. Re-Bulk SOC does. V19.10
+removed the timer and added Re-Bulk SOC.
+
+### 1.3 The settings that matter
+
+The names are the ones the vendor software shows.
+
+| Setting | What it does | Test battery |
+|---|---|---|
+| Charging Float Mode | Turns the three stages on. Off: the BMS always asks for RCV. | on |
+| Vol. Cell RCV | Charge voltage per cell for Bulk and Absorption. | 3.45 V |
+| Vol. Cell RFV | Charge voltage per cell for Float. | 3.35 V |
+| RCV Time | How long Absorption lasts. | 0.5 h |
+| SOC-100% Volt. | Two jobs. The battery must still be above this (× cells) at the end of Absorption to enter Float. And SOC becomes 100 % when the highest cell reaches it. The BMS accepts only a value below RCV. | 3.445 V |
+| Re-Bulk SOC | How many percent SOC may fall during Float before the BMS returns to Bulk. From 1 to 50. | 1 % |
+| SOC-0% Volt. | SOC becomes 0 % when the lowest cell falls to this voltage. | 2.90 V |
+| RFV Time | Not used since V19.10. | — |
+
+The last column is one 16-cell LiFePO4 battery. It is an example, not advice.
+
+### 1.4 How SOC gets to 100 % and to 0 %
+
+![SOC bar: 1 to 99 % is counted from the current; 0 % and 100 % are set by cell voltage](img/soc-rules.en.svg)
+
+Between 1 % and 99 % the BMS **counts** the current that goes in and out. Counting
+alone never shows 100 %: SOC stops at 99 % and waits for a sign from the voltage
+that the battery is really full. Which sign it waits for depends on the address of
+the BMS:
+
+| Your BMS | When SOC becomes 100 % |
+|---|---|
+| Charging Float Mode **on** and address **0** | When Float begins. SOC shows 99 % during the whole Absorption. The picture in 1.2 shows this case. |
+| Charging Float Mode **off**, or address **1–15** | When the highest cell has stayed at SOC-100% Volt. or above for 4 seconds. With usual settings this is about the moment Absorption starts, or a little earlier. |
+
+On the way down SOC stops at 1 %. It becomes **0 %** when the lowest cell has stayed
+at SOC-0% Volt. or below for 4 seconds. This rule is the same for every address.
+
+This is why SOC can sit at 99 % for a while and then jump to 100 %. The jump also
+removes the small errors that counting collects over many days.
+
+**Which address does my BMS have?** The address is set with the four small DIP
+switches on the BMS. All switches off is address 0. The vendor manual calls address 0
+the host (master) and addresses 1–15 the slaves; in a set of parallel batteries the
+master is the one that is connected to the inverter. A single battery with all
+switches off also has address 0. The vendor software shows the address as
+Device Addr., and it is the two digits at the end of the Bluetooth name (`-00`,
+`-01`, …). The test battery on this page has address 1.
+
+### 1.5 Common questions
+
+**The battery never reaches Float.** Check in this order:
+
+1. Charging Float Mode is on.
+2. The battery voltage, as the BMS shows it, really gets above RCV × cells. If the
+   inverter stops at that voltage or a little below it, Absorption never starts.
+   Compare the voltage in the app with a good meter. If they differ, calibrate the
+   BMS voltage in the app. One owner reported that Absorption started only after
+   this calibration.
+3. At the end of RCV Time the battery is still above SOC-100% Volt. × cells. If a
+   load pulls the voltage down at that moment, the BMS returns to Bulk and starts
+   again.
+
+**Float is on, but nothing changes.** Either RFV is equal to RCV, so in Float the
+BMS asks for the same voltage as before. Or the inverter does not take its charge
+voltage from the BMS.
+
+**Float ends almost at once.** Re-Bulk SOC is 1. The BMS returns to Bulk as soon
+as SOC shows 99 %, which is about half a percent of the capacity. Set a larger
+value if Float must survive small loads.
+
+**SOC stays at 99 %.** SOC waits there for the sign described in 1.4. The usual
+reasons:
+
+1. Charging Float Mode is on and the address is 0. SOC becomes 100 % only when Float
+   begins. If the battery does not reach Float (see the first question), SOC does
+   not reach 100 %.
+2. In the other cases the highest cell must hold SOC-100% Volt. for 4 seconds. If it
+   never does, the charge voltage is too low for the cells, or SOC-100% Volt. is set
+   too high.
+3. The battery was at 100 %, lost about 1 %, and was charged again. The BMS does not
+   count charge above 99 %, and the 100 % rule works again only after SOC has fallen
+   to 98 % or lower. Until then SOC shows 99 %. This does no harm.
+
+**Does one weak cell restart the RCV timer?** No. The stages look only at the
+voltage of the whole battery, which is the sum of all cells. So in effect they look
+at the average cell. And nothing restarts the RCV timer: once Absorption has
+started, it runs to the end of RCV Time.
+
+**Does the BMS look at single cells at all?** For the stages, no. For SOC, yes:
+the highest cell for 100 % and the lowest cell for 0 %. Protection also looks at
+single cells, but that is a different subject.
+
+**Where can I see the stage?** The vendor PC software shows it as Charge Status
+(Bulk, Abs or Float) with a timer. Developers can read it from the BMS, see
+[2.5](#25-how-to-read-the-stage).
+
+---
+
+## Part 2. Technical details
+
+### 2.1 Sources and marks
 
 - The logic was read from firmware V19.34 (JK-PB2A16S20P). ○ = known from the
   firmware only.
 - ✔ = also seen on a device (JK-PB2A16S20P, hardware 19A, firmware V19.30) by
   reading registers over RS485. Nothing was written for these checks.
-- The vendor release note for V19.10 says: "Increase the Re-Bulk SOC parameter,
-  optimize the float charging logic, and remove the RFV timer."
+- Vendor release note for V19.10: "Increase the Re-Bulk SOC parameter, optimize
+  the float charging logic, and remove the RFV timer."
 
-Firmware before V19.10 left Float with an RFV timer. V19.10 replaced the timer with
-Re-Bulk SOC. This page describes V19.10 and later only.
+What was checked:
 
-## 1. Settings and registers
+| Statement | |
+|---|---|
+| 0x1312 shows the stage (values 1 and 2 seen) and 0x1310 the seconds in it | ✔ |
+| Absorption lasts RCV Time; the pack voltage is not checked during it | ✔ |
+| Absorption → Float when the pack is above SOC-100% Volt. × cells at the end | ✔ (seen once) |
+| Float is not left by time (62 min seen) or by voltage (pack both below SOC-100% Volt. × cells and above RCV × cells seen) | ✔ |
+| The pack voltage 0x1290 is the sum of the cell voltages | ✔ (within 1 mV) |
+| SOC is rounded to the nearest percent | ✔ (99 978 of 100 000 mAh shows 100 %) |
+| Bulk → Absorption, Absorption → Bulk, Float → Bulk (Re-Bulk) | ○ |
+| The voltage that goes to the inverter in each stage | ○ |
+| SOC to 100 % and to 0 %, and the limits of counting | ○ |
+| Address 0 with Charging Float Mode on: SOC 100 % only when Float begins | ○ (the test device has address 1; one owner with Charging Float Mode on reported no jump to 100 % before Absorption) |
 
-| Name in the vendor app | Register | Meaning here | Test device |
-|---|---|---|---|
-| Charging Float Mode | 0x1114 bit 9 | Turns the stage logic on | on |
-| Vol. Cell RCV | 0x1020 | Charge voltage per cell for Bulk and Absorption | 3.450 V |
-| Vol. Cell RFV | 0x1024 | Charge voltage per cell for Float | 3.350 V |
-| SOC-100% Volt. | 0x1018 | Gate for Float, and the cell voltage that sets SOC to 100 % | 3.445 V |
-| SOC-0% Volt. | 0x101C | The cell voltage that sets SOC to 0 % | 2.900 V |
-| Cell Count | 0x106C | Multiplier for the pack thresholds | 16 |
-| RCV Time | 0x1504, high byte, × 0.1 h | Length of Absorption | 0.5 h |
-| Re-Bulk SOC | 0x1510, high byte, % | SOC drop that ends Float. Accepted range 1–50; an invalid stored value becomes 1. ○ | 1 |
-| RFV Time | 0x1504, low byte | **Not used** since V19.10. Not writable on V19.30 ✔ | — |
+### 2.2 Registers
 
-Live values:
+Settings (the [register map](register-map.md) has the ranges and write rules):
 
-| Register | Meaning | |
+| Register | Name in the vendor software | Use in this logic |
 |---|---|---|
-| 0x1312, high byte | Charge stage: 0 = Bulk ○, 1 = Absorption ✔, 2 = Float ✔ (vendor name: Charge Status) | ✔ |
-| 0x1310, u16, s | Time in the current stage. 0 in Bulk, restarts at each stage change (vendor name: Charge Status Time) | ✔ |
-| 0x1290, u32, mV | Pack voltage, as the BMS measures it | ✔ |
-| 0x1248 | High byte: index of the highest cell. Low byte: index of the lowest cell | ✔ |
-| 0x12A7, % | SOC = remaining / full, rounded to the nearest percent, at most 100 | ✔ |
-| 0x12A8 / 0x12AC, mAh | Remaining capacity / full-charge capacity | ✔ |
+| 0x1114 bit 9 | Charging Float Mode | Enables the stage logic |
+| 0x1020, u32, mV | Vol. Cell RCV | Request in Bulk and Absorption; threshold for Absorption |
+| 0x1024, u32, mV | Vol. Cell RFV | Request in Float |
+| 0x1018, u32, mV | SOC-100% Volt. | Gate for Float (× cells, against the pack); SOC 100 % (against the highest cell). Must be below 0x1020 ○ |
+| 0x101C, u32, mV | SOC-0% Volt. | SOC 0 % (against the lowest cell) |
+| 0x106C, u32 | Cell Count | Multiplier |
+| 0x1504, high byte | RCV Time, × 0.1 h, 1–250 | Length of Absorption |
+| 0x1504, low byte | RFV Time | Not used since V19.10; not writable on V19.30 ✔ |
+| 0x1510, high byte | Re-Bulk SOC, %, 1–50 | SOC drop that ends Float. A stored value outside 1–50 becomes 1 at start-up ○ |
+| 0x1108, u32 | Pack address | Selects the SOC 100 % rule, see [2.4](#24-soc-logic) |
 
-"Request" below means the charge voltage that the BMS sends to the inverter in the
-inverter protocol (CAN or RS485). The BMS does not regulate the voltage itself. A
-charger that does not listen to the BMS is not affected by the request, but the
-stage logic still runs, because it only looks at the pack voltage and SOC.
+Live values (telemetry block):
 
-## 2. Charge stages
+| Register | Meaning |
+|---|---|
+| 0x1312, high byte | Charge stage: 0 = Bulk, 1 = Absorption, 2 = Float (vendor name: Charge Status) |
+| 0x1310, u16, s | Time in the current stage, at most 65530. 0 in Bulk (vendor name: Charge Status Time) |
+| 0x1290, u32, mV | Pack voltage = the sum of the cell voltages |
+| 0x1200 + 2·n, u16, mV | Voltage of cell n |
+| 0x1248 | High byte: index of the highest cell. Low byte: index of the lowest cell |
+| 0x12A7, u8, % | SOC |
+| 0x12A8 / 0x12AC, mAh | Remaining capacity / full-charge capacity |
+| 0x12F0, u32, 0.1 s | System tick counter, the time base of this logic |
 
-With Charging Float Mode **off**, the stage is always Bulk and the request is always
-RCV × cells. ○
+### 2.3 Stage logic
 
-With Charging Float Mode **on**:
-
-```mermaid
-flowchart TD
-    B["1) BULK<br/>request = RCV × cells"]
-    Q1{"2) Pack voltage > RCV × cells ?"}
-    A["3) ABSORPTION<br/>request = RCV × cells<br/>start the RCV timer"]
-    Q2{"4) RCV Time expired ?"}
-    Q3{"5) Pack voltage > SOC-100% Volt. × cells ?"}
-    F["6) FLOAT<br/>request = RFV × cells<br/>remember the SOC at entry"]
-    Q4{"7) SOC fell by Re-Bulk SOC or more ?"}
-
-    B --> Q1
-    Q1 -- No --> B
-    Q1 -- Yes --> A
-    A --> Q2
-    Q2 -- "No (wait)" --> Q2
-    Q2 -- Yes --> Q3
-    Q3 -- "No: new Bulk" --> B
-    Q3 -- Yes --> F
-    F --> Q4
-    Q4 -- "No (stay, no timer)" --> Q4
-    Q4 -- "Yes: Re-Bulk" --> B
-```
-
-| Step | What the firmware does | Example (test device, 16 cells) | |
-|---|---|---|---|
-| 1 | Bulk. Request = RCV × cells. The stage time 0x1310 is 0. | 3.450 × 16 = 55.20 V | ○ |
-| 2 | Compares the pack voltage with RCV × cells. It must be **higher**, not equal. | > 55.20 V | ○ |
-| 3 | Absorption starts. The request stays RCV × cells. | | ✔ (stage), ○ (request) |
-| 4 | Waits for RCV Time. The voltage is **not** checked during this time: the pack may fall below RCV × cells and the stage does not change. | 0.5 h = 1800 s. The pack fell to 55.08 V and the stage stayed Absorption. | ✔ |
-| 5 | When RCV Time ends, compares the pack voltage with SOC-100% Volt. × cells. Higher → Float. Not higher → back to Bulk (a load pulled the battery down; charge again). | 3.445 × 16 = 55.12 V. The pack was 55.24 V → Float. | ✔ (Float branch), ○ (Bulk branch) |
-| 6 | Float. Request = RFV × cells. During the first 3 s the BMS stores the present SOC as the reference. | 3.350 × 16 = 53.60 V | ✔ (stage), ○ (request) |
-| 7 | Stays in Float **without any time limit**. The pack voltage does not matter here. When (reference SOC − present SOC) ≥ Re-Bulk SOC, the stage returns to Bulk. | 30 min in Float, the pack fell to 55.08 V, the stage stayed Float. | ✔ (stays), ○ (Re-Bulk) |
-
-Re-Bulk SOC is a **difference** from the SOC at the entry to Float. It is not an
-absolute SOC level. Example: Float starts at 100 %, Re-Bulk SOC = 10 → the BMS asks
-for RCV again when SOC reaches 90 %.
-
-If Charging Float Mode is turned off, the stage returns to Bulk at once. ○
-
-The stage logic never looks at single cells. It uses the pack voltage 0x1290, which
-is the same as comparing the average cell with RCV. One low cell does not restart the
-RCV timer; nothing restarts it. 0x1290 is the BMS's own measurement of the whole pack
-with its calibration factor (0x12DC), so a wrong voltage calibration shifts both
-thresholds (steps 2 and 5).
-
-## 3. SOC to 100 %
-
-The BMS counts charge in and out (coulomb counter). Counting alone does not bring
-SOC to 100 %: while the remaining capacity is above 99 % of the full capacity,
-charge is no longer added. ○ SOC reaches 100 % only through the rule below. This
-also removes the error that the counter collected.
-
-```mermaid
-flowchart TD
-    C["1) Coulomb counting<br/>charge is added only up to 99 %"]
-    Q1{"2) Highest cell ≥ SOC-100% Volt. ?"}
-    Q2{"3) Held for 4 s without a break ?"}
-    S["4) Remaining capacity = full capacity<br/>SOC = 100 %"]
-    Q3{"5) SOC < 99 %<br/>or highest cell < 90 % of SOC-100% Volt. ?"}
-
-    C --> Q1
-    Q1 -- No --> C
-    Q1 -- Yes --> Q2
-    Q2 -- No --> Q1
-    Q2 -- Yes --> S
-    S --> Q3
-    Q3 -- "No (rule stays off)" --> Q3
-    Q3 -- "Yes: rule is armed again" --> C
-```
-
-| Step | What the firmware does | Example (test device) | |
-|---|---|---|---|
-| 1 | Adds charge to the remaining capacity, but not above 99 % of the full capacity. Discharge is always counted here. | SOC stops at 99 % | ○ |
-| 2–3 | The **highest** cell must be at or above SOC-100% Volt. for 4 s without a break. | ≥ 3.445 V | ○ |
-| 4 | Sets the remaining capacity to the full capacity, once. | 100000 mAh, SOC 100 % | ○ |
-| 5 | The rule can fire again only after SOC fell below 99 %, or the highest cell fell below 90 % of SOC-100% Volt. | < 99 %, or < 3.100 V | ○ |
-
-This rule does not depend on the charge stage and works with Charging Float Mode on
-or off. One exception: on a pack with **address 0** and Charging Float Mode on, the
-4 s rule is not used. SOC is set to 100 % at the moment of the change from
-Absorption to Float, if the highest cell is above SOC-100% Volt. at that moment. ○
-
-## 4. SOC to 0 %
-
-The same idea at the bottom. While the remaining capacity is below 1 % of the full
-capacity, discharge is no longer subtracted. ○ SOC reaches 0 % only through this rule:
-
-```mermaid
-flowchart TD
-    C["1) Coulomb counting<br/>discharge is subtracted only down to 1 %"]
-    Q1{"2) Lowest cell ≤ SOC-0% Volt. ?"}
-    Q2{"3) Held for 4 s without a break ?"}
-    S["4) Remaining capacity = 0<br/>SOC = 0 %"]
-    Q3{"5) Lowest cell > 105 % of SOC-0% Volt. ?"}
-
-    C --> Q1
-    Q1 -- No --> C
-    Q1 -- Yes --> Q2
-    Q2 -- No --> Q1
-    Q2 -- Yes --> S
-    S --> Q3
-    Q3 -- "No (rule stays off)" --> Q3
-    Q3 -- "Yes: rule is armed again" --> C
-```
-
-Example for the test device: the lowest cell at or below 2.900 V for 4 s → SOC 0 %.
-The rule is armed again when the lowest cell is above 3.045 V. ○
-
-## 5. What was seen on the device
-
-JK-PB2A16S20P, firmware V19.30, 16 cells, current 0 A, SOC 100 %, read every 15 s:
-
-| Time | 0x1312 stage | 0x1310 | Pack | Note |
+| Stage | 0x1312 | Request | Leaves when | Next stage |
 |---|---|---|---|---|
-| 11:14:45 | 1 Absorption | 828 s | 55.106 V | |
-| 11:17:17 | 1 Absorption | 979 s | 55.080 V | Below RCV × 16 (55.20 V) and below SOC-100% × 16 (55.12 V): no stage change |
-| 11:30:54 | 1 Absorption | 1796 s | 55.237 V | |
-| 11:31:09 | 2 Float | 10 s | 55.233 V | RCV Time (1800 s) ended, pack above 55.12 V |
-| 12:01:14 | 2 Float | 1815 s | 55.084 V | Still Float after 30 min; the voltage does not matter |
+| Bulk | 0 | RCV × cells | pack > RCV × cells | Absorption |
+| Absorption | 1 | RCV × cells | time in stage > RCV Time × 360 s | Float if pack > SOC-100% Volt. × cells, else Bulk |
+| Float | 2 | RFV × cells | SOC at entry − SOC ≥ Re-Bulk SOC | Bulk |
 
-Not seen yet: the start of Absorption, the return from Absorption to Bulk, the
-Re-Bulk from Float, and the SOC rules of sections 3 and 4.
+The same as pseudo-code. It runs on every pass of the main loop. `pack` is 0x1290,
+`SOC` is 0x12A7, and all voltages are in mV:
 
-## 6. Practical consequences
+```
+if not float_mode:                       # Charging Float Mode is off
+    stage = BULK
+    request = RCV * cells
+    return
 
-- **RFV = RCV.** The stage still changes to Float, but the request does not change.
-  Float then has no effect, and Re-Bulk SOC has no effect.
-- **Re-Bulk SOC = 1.** This is the value the firmware uses when the stored one is
-  invalid, and the value on the test device. SOC is rounded, so a Float that started
-  at 100 % ends after about 0.5 % of the capacity is discharged. Use a larger value
-  if Float must survive small loads. ○
-- **SOC-100% Volt. has two jobs.** It is the gate for Float (pack voltage at the end
-  of RCV Time) and the trigger for SOC 100 % (highest cell). If it is set higher
-  than the pack really holds at the end of Absorption, the BMS returns to Bulk every
-  time and never reaches Float.
-- **Absorption needs a pack voltage above RCV × cells**, measured by the BMS. If the
-  charger holds the pack at or below that value, Absorption does not start, and
-  Float never comes. ○ One user reported that Absorption started only after the
-  voltage calibration of the BMS was corrected.
-- **No Float without Charging Float Mode.** With the switch off, none of the stage
-  logic runs. The SOC rules still work.
-- **Monitoring.** 0x1312 and 0x1310 show the stage and the time in it. They are in
-  the telemetry block, so they are also in the JK02 frame 0x02 (bytes 278–279 and
-  280). ○
+if stage == BULK and pack > RCV * cells:
+    stage = ABSORPTION;  t0 = now
+
+if stage == ABSORPTION and seconds(now - t0) > RCV_time * 360:
+    stage = FLOAT if pack > SOC100_V * cells else BULK
+    t0 = now
+
+if stage == FLOAT:
+    if seconds(now - t0) < 3:
+        soc_ref = SOC
+    elif soc_ref - SOC >= rebulk_soc:
+        stage = BULK;  t0 = now
+
+time_in_stage = 0 if stage == BULK else min(seconds(now - t0), 65530)
+request = RFV * cells if stage == FLOAT else RCV * cells
+```
+
+Notes:
+
+- All comparisons with the pack voltage are strict (`>`). A pack that sits exactly
+  on RCV × cells does not start Absorption. ○
+- The logic uses only the pack voltage, never a single cell. The pack voltage is
+  the sum of the cell readings ✔, so the test is the same as "average cell > RCV".
+  The voltage calibration factor (0x12DC, command 0x1600) scales every cell
+  reading ○, so a wrong calibration moves both thresholds.
+- The RCV timer is never restarted or paused. During Absorption the pack may fall
+  below RCV × cells and even below SOC-100% Volt. × cells: only the value at the
+  end counts. ✔
+- `soc_ref` is taken during the first 3 s of Float and is not updated later. ○
+- In Float the pack voltage has no effect. ✔ Float ends only by the SOC drop, or
+  when Charging Float Mode is turned off. ○
+- With Charging Float Mode off, 0x1312 is 0 and 0x1310 is not updated. ○
+- `request` goes into the summary that the inverter protocols read. The protocol
+  encoders that were examined send it as the charge voltage limit in units of 0.1 V
+  (request / 100), with no offset. ○
+- With parallel packs, the request comes from the stage logic of the BMS that builds
+  this summary: its own pack voltage and its own SOC. The stages of the other packs
+  are not used for it. ○
+
+### 2.4 SOC logic
+
+It runs on every pass, with Charging Float Mode on or off:
+
+```
+# 1. "full" and "empty" flags
+if not full:
+    if not float_mode or pack_address != 0:
+        if highest_cell < SOC100_V:      t_full = now
+        if seconds(now - t_full) >= 4:   full = True
+    elif just_entered_float and highest_cell > SOC100_V:
+        full = True                      # pack address 0 with float mode on
+elif highest_cell < 0.90 * SOC100_V or SOC < 99:
+    full = False
+
+if not empty:
+    if lowest_cell > SOC0_V:             t_empty = now
+    if seconds(now - t_empty) >= 4:      empty = True
+elif lowest_cell > 1.05 * SOC0_V:
+    empty = False
+
+# 2. coulomb counting (delta = current * time, positive when charging)
+skip = (remaining > 0.99 * full_capacity and delta > 0) or \
+       (remaining < 0.01 * full_capacity and delta < 0)
+if not skip:
+    remaining += delta
+remaining = clamp(remaining, 0, full_capacity)
+
+# 3. resets, once each time a flag becomes true
+if rising_edge(empty):  remaining = 0
+if rising_edge(full):   remaining = full_capacity
+
+SOC = min(100, round(remaining * 100 / full_capacity))
+```
+
+Notes:
+
+- `highest_cell` and `lowest_cell` are the cells that 0x1248 points to.
+  `just_entered_float` is true in the pass after the stage changed from Absorption
+  to Float.
+- Counting alone keeps the remaining capacity between 1 % and 99 % of the full
+  capacity. SOC 100 % and SOC 0 % come only from the two flags. ○
+- After a reset to 100 %, the rule can fire again only after SOC has fallen below
+  99 %, or the highest cell has fallen below 90 % of SOC-100% Volt. After a reset
+  to 0 %, only after the lowest cell has risen above 105 % of SOC-0% Volt. ○
+- A pack with address 0 and Charging Float Mode on does not use the 4 s rule. Its
+  SOC becomes 100 % at the change from Absorption to Float. If the check at the end
+  of RCV Time fails and the stage returns to Bulk, SOC stays at 99 % until a later
+  pass reaches Float. ○
+- After a reset to 100 %, a discharge that leaves SOC at 99 % does not arm the rule
+  again, and charge is not counted above 99 %. SOC then stays at 99 % through the
+  next charge; it must fall to 98 % first. ○
+- A write of the nominal capacity and some commands replace the counter with an
+  estimate from the cell voltage. That is a different mechanism, see
+  [Device behaviour](device-behaviour.md#22-soc-re-estimate).
+
+### 2.5 How to read the stage
+
+Modbus RTU, read 2 registers at 0x1310 (frames from the test device):
+
+```
+Request:   01 03 13 10 00 02 C1 4A
+Response:  01 03 04 0A 4D 02 00 68 9C
+```
+
+| Bytes of the response | Register | Meaning |
+|---|---|---|
+| `0A 4D` | 0x1310 | 2637 s in the current stage |
+| `02 00` | 0x1312 | High byte 2: Float |
+
+Bluetooth (JK02): the same fields are in the telemetry frame 0x02, at bytes 278–279
+(time, little-endian) and 280 (stage). ○
+
+### 2.6 Seen on the device
+
+JK-PB2A16S20P, firmware V19.30, 16 cells, RCV 3450 mV (× 16 = 55.20 V), SOC-100%
+Volt. 3445 mV (× 16 = 55.12 V), RCV Time 0.5 h, SOC 100 %:
+
+| Time | Stage 0x1312 | 0x1310 | Pack 0x1290 | Current | What it shows |
+|---|---|---|---|---|---|
+| 11:14:45 | 1 Absorption | 828 s | 55.106 V | 0 A | |
+| 11:17:17 | 1 Absorption | 979 s | 55.080 V | 0 A | Below both thresholds: the stage does not change |
+| 11:30:54 | 1 Absorption | 1796 s | 55.237 V | 0 A | 4 s before the end of RCV Time (1800 s) |
+| 11:31:09 | 2 Float | 10 s | 55.233 V | 0 A | Pack above 55.12 V → Float |
+| 12:02:44 | 2 Float | 1905 s | 55.016 V | −0.6 A | Below SOC-100% Volt. × 16: still Float |
+| 12:17:49 | 2 Float | 2810 s | 55.233 V | 0 A | Above RCV × 16: still Float |
+| 12:32:54 | 2 Float | 3715 s | 55.190 V | −0.4 A | Still Float after 62 min |
+
+### 2.7 Not checked yet
+
+- The start of Absorption, the return from Absorption to Bulk, and Re-Bulk from
+  Float.
+- The voltage that the inverter really receives in each stage.
+- The SOC rules of section 2.4 on a device, for address 0 and for the other
+  addresses.
+- The stage after a restart of the BMS.
+- Packs in parallel: how the master combines the requests of the packs.

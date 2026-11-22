@@ -37,9 +37,11 @@ protection: a MOS is on only when its switch is 1 and no protection is active.
   capacity in 0x12A8 and the full-charge capacity in 0x12AC. SOC (0x12A7) is
   remaining / full. ✔
 - When the highest cell stays at or above the SOC 100 % voltage (0x1018) for 4 s, the
-  remaining capacity is set to full. When the lowest cell stays at or below the SOC 0 %
-  voltage (0x101C) for 4 s, it is set to 0. Counting alone keeps SOC between 1 % and
-  99 %. ○ Details and flow charts: [Charge stages and SOC reset](charging-and-soc.md).
+  remaining capacity is set to full. Exception: a pack with address 0 and charging
+  float mode on sets it to full at the change from Absorption to Float instead. When
+  the lowest cell stays at or below the SOC 0 % voltage (0x101C) for 4 s, it is set
+  to 0. Counting alone keeps SOC between 1 % and 99 %. ○ Details and pictures:
+  [How the BMS charges: stages and SOC](charging-and-soc.md).
 - 0x12B0 counts cycles, and 0x12B4 adds up the charged capacity over the lifetime. ✔
 
 ### 2.2 SOC re-estimate
@@ -160,8 +162,8 @@ Values that are the same in all three presets:
   RCV time (0x1504 high byte, × 0.1 h) ✔; then the request changes to RFV × cell count
   if the pack is above SOC 100 % voltage × cell count ✔. Float has no time limit and
   ends when SOC falls by Re-Bulk SOC (0x1510 high byte) ○. The stage and the time in
-  it are in 0x1312 / 0x1310 ✔. Flow charts:
-  [Charge stages and SOC reset](charging-and-soc.md).
+  it are in 0x1312 / 0x1310 ✔. Pictures and the exact logic:
+  [How the BMS charges: stages and SOC](charging-and-soc.md).
 - Charge and discharge current limits sent to the inverter come from the
   over-current settings. ○
 

@@ -79,9 +79,11 @@ What the thresholds do:
   cell count). RCV is used first. With charging float mode (0x1114 bit 9) on, the
   request changes to RFV after the RCV time (0x1504), if the pack is then above
   SOC 100 % voltage × cell count. The full logic is in
-  [Charge stages and SOC reset](charging-and-soc.md).
+  [How the BMS charges: stages and SOC](charging-and-soc.md).
 - **SOC 100 %**: when the highest cell stays at or above it for 4 s, the remaining
-  capacity is set to full ○. It is also the gate for the change to float.
+  capacity is set to full ○ (a pack with address 0 and charging float mode on does
+  this at the change to float instead ○). It is also the gate for the change to
+  float.
 - **Balancing** runs when the cells are above the balance start voltage and
   (max cell − min cell) > balance trigger delta.
 
@@ -151,7 +153,7 @@ cell count.
 
 | Addr | Type | Name | Values | Default | Example | W | JK02 |
 |---|---|---|---|---|---|---|---|
-| 0x1108 | u32 | Pack address (DevAddr) | Set by DIP switches. 0 = parallel master ? (see [Serial ports](serial-ports-and-can.md#4-pack-address-and-parallel-packs)). | 1 | 1 | — ✔ | — |
+| 0x1108 | u32 | Pack address (DevAddr) | Set by DIP switches (all off = 0). The vendor manual calls 0 the host and 1–15 the slaves (see [Serial ports](serial-ports-and-can.md#4-pack-address-and-parallel-packs)). | 1 | 1 | — ✔ | — |
 | 0x110C | u32 | Discharge pre-charge time | 0–300 s | 5 | 5 | W ✔ | 0x25 |
 | 0x1110 | u32 | Not documented (factory constant ?) | — | 500000 | 500000 | — ○ | — |
 | 0x1114 | u16 | Function switches | bitfield below | 0x1010 | 0x1200 | W ✔ (bits 4, 6) | 0xBE (all) / per bit |
@@ -208,7 +210,7 @@ value was decoded and checked against other readings.
 | 0x124A + 2·n (n = 0…31) | u16 | mΩ | Measured resistance of the balance lead of cell *n*. A high value means a bad crimp or connector. | 61–65 | ✔ |
 | 0x128A | s16 | 0.1 °C | MOSFET (power board) temperature | 194 | ✔ |
 | 0x128C | u32 | bitmask | Bit *n* = balance lead *n* resistance alarm | 0 | ✔ |
-| 0x1290 | u32 | mV | Pack voltage | 53280 | ✔ |
+| 0x1290 | u32 | mV | Pack voltage. It is the sum of the cell voltages (within 1 mV of the sum of 0x1200… on the test device). | 53280 | ✔ |
 | 0x1294 | u32 | mW | Pack power (absolute) | 0 | ✔ |
 | 0x1298 | s32 | mA | **Pack current. + = charge, − = discharge.** | 0 | ✔ |
 | 0x129C | s16 | 0.1 °C | Battery temperature 1 | 174 | ✔ |
