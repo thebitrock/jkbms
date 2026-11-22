@@ -158,6 +158,8 @@ Common telemetry fields (type 0x02):
 | 236 | 0x12E6 | Heater current | s16 mA |
 | 254 / 256 / 258 | 0x12F8 / 0x12FA / 0x12FC | Temperature 3 / 4 / 5 | s16 0.1 °C |
 | 262 | 0x1300 | Clock, seconds since 2020-01-01 | u32 |
+| 278 | 0x1310 | Time in the charge stage (0 in Bulk) ✔ | u16 s |
+| 280 | 0x1312 | Charge stage: 0 Bulk, 1 Absorption, 2 Float ✔ | u8 |
 
 Common settings fields (type 0x01): settings value *k* (k = 0…33) at byte
 6 + 4·k, in the order of the register map (for example RCV = byte 38, RFV = byte 42,

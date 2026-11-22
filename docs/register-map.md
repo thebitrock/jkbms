@@ -81,7 +81,7 @@ What the thresholds do:
   SOC 100 % voltage × cell count. The full logic is in
   [How the BMS charges: stages and SOC](charging-and-soc.md).
 - **SOC 100 %**: when the highest cell stays at or above it for 4 s, the remaining
-  capacity is set to full ○ (a pack with address 0 and charging float mode on does
+  capacity is set to full ✔ (a pack with address 0 and charging float mode on does
   this at the change to float instead ○). It is also the gate for the change to
   float.
 - **Balancing** runs when the cells are above the balance start voltage and
